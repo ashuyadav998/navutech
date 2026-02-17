@@ -60,9 +60,8 @@ const ChatWidget = () => {
 
   useEffect(() => {
   if (!isAuthenticated()) return;
-  if (process.env.NODE_ENV === 'development') {
     initializeSocket();
-  }
+  
   return () => {};
 }, [isAuthenticated]);
 
