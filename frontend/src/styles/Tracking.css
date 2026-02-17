@@ -1,0 +1,151 @@
+.tracking-card {
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+}
+
+.tracking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.tracking-id {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.carrier-badge {
+  background: #f0f7ff;
+  color: #007bff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Barra de progreso */
+.progress-track {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.progress-track::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: #e1e4e8;
+  z-index: 1;
+}
+
+.step {
+  z-index: 2;
+  text-align: center;
+  width: 20%;
+}
+
+.step-icon {
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border: 2px solid #e1e4e8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  color: #95a5a6;
+  transition: all 0.3s;
+}
+
+.step.active .step-icon {
+  border-color: #007bff;
+  color: #007bff;
+  background: #eef6ff;
+}
+
+.step-text {
+  font-size: 0.75rem;
+  color: #95a5a6;
+  text-transform: capitalize;
+}
+
+.step.active .step-text {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Botones */
+.tracking-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.btn-track-external, .btn-download-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-track-external {
+  background: #2c3e50;
+  color: white;
+  border: none;
+}
+
+.btn-download-label {
+  background: #fff;
+  color: #2c3e50;
+  border: 1px solid #d1d5da;
+}
+
+.btn-track-external:hover { background: #1a252f; }
+.btn-download-label:hover { background: #f6f8fa; }
+
+/* Historial */
+.history-list {
+  border-left: 2px solid #eef0f2;
+  margin-left: 10px;
+  padding-left: 20px;
+}
+
+.history-item {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.history-dot {
+  position: absolute;
+  left: -27px;
+  top: 5px;
+  width: 12px;
+  height: 12px;
+  background: #cbd5e0;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.history-date {
+  font-size: 0.8rem;
+  color: #718096;
+}

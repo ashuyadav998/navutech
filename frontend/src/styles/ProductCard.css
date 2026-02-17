@@ -1,0 +1,125 @@
+.product-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.product-image {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.product-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #e74c3c;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.product-info {
+  padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-name {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+  color: #2c3e50;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-brand {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+}
+
+.product-price {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-original {
+  text-decoration: line-through;
+  color: #95a5a6;
+  font-size: 0.9rem;
+}
+
+.price-current {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.product-stock {
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.in-stock {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.out-stock {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.add-to-cart-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #3498db;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.3s;
+  margin-top: auto;
+}
+
+.add-to-cart-btn:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.add-to-cart-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}

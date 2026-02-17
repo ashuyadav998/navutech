@@ -1,0 +1,388 @@
+.auth-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.auth-card {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 450px;
+}
+
+.auth-card h1 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #fee;
+  color: #c0392b;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid #c3e6cb;
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-card .form-group {
+  margin-bottom: 20px;
+}
+
+.auth-card .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.auth-card .form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.auth-card .form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.submit-btn {
+  padding: 14px;
+  background-color: #3498db;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.submit-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 20px;
+  color: #7f8c8d;
+}
+
+.auth-link a {
+  color: #3498db;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+
+.auth-link a:hover {
+  color: #2980b9;
+}
+
+/* Verification Step Styles */
+.verification-step {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.verification-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.verification-step p {
+  margin: 8px 0;
+  color: #555;
+}
+
+.verification-step strong {
+  color: #3498db;
+  font-size: 1.1rem;
+}
+
+.small-text {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+}
+
+.code-input {
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: 8px;
+  font-weight: bold;
+}
+
+.resend-code {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.resend-code p {
+  margin-bottom: 8px;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0;
+}
+
+.link-button:hover:not(:disabled) {
+  color: #2980b9;
+}
+
+.link-button:disabled {
+  color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.back-button {
+  width: 100%;
+  padding: 12px;
+  background: #ecf0f1;
+  color: #2c3e50;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.back-button:hover {
+  background: #d5dbdb;
+}
+
+/* ✅ AÑADIR AL FINAL DE Auth.css */
+
+/* Paso de éxito */
+.success-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.success-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: celebrate 0.6s ease-out;
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.success-container h2 {
+  color: #10b981;
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.success-container p {
+  color: #64748b;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.success-container p strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.success-container .success-message {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-weight: 500;
+}
+
+.redirect-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px 0;
+  padding: 16px;
+  background: #f0f9ff;
+  border-radius: 8px;
+}
+
+.redirect-message p {
+  margin: 0;
+  color: #0c4a6e;
+  font-size: 14px;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #bfdbfe;
+  border-top: 3px solid #0ea5e9;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.success-container .submit-btn {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.success-container .submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Mejoras para verificación */
+.verification-step {
+  text-align: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.verification-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounce 1s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.verification-step p {
+  margin: 8px 0;
+  color: #475569;
+}
+
+.verification-step strong {
+  display: block;
+  font-size: 18px;
+  color: #667eea;
+  margin: 12px 0;
+}
+
+.small-text {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.code-input {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 8px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.resend-code {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.resend-code p {
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  font-size: 14px;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.link-button:hover {
+  color: #764ba2;
+}
+
+.link-button:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.back-button {
+  background: none;
+  border: 2px solid #e2e8f0;
+  color: #64748b;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  margin-top: 16px;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
