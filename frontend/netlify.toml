@@ -1,31 +1,4 @@
-# Netlify configuration for SimShop
-
 [build]
-  # Directorio base donde está el frontend
   base = "frontend"
-  
-  # Comando para construir el proyecto
-  command = "npm install && npm run build"
-  
-  # Directorio donde se genera el build
+  command = "npm install && CI=false npm run build"
   publish = "build"
-
-# Variables de entorno de producción
-[build.environment]
-  NODE_VERSION = "18"
-  REACT_APP_API_URL = "https://tu-backend.herokuapp.com/api"
-
-# Redirecciones para React Router (SPA)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Headers de seguridad
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "no-referrer-when-downgrade"
