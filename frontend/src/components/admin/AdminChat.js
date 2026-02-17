@@ -5,8 +5,8 @@ import '../../styles/AdminChat.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = API_URL.replace('/api', '');
-const IS_DEV = process.env.NODE_ENV === 'development';
 
+// ✅ Sin IS_DEV — Render sí soporta WebSockets
 let socket = null;
 
 const AdminChat = () => {
@@ -34,29 +34,45 @@ const AdminChat = () => {
     const token = getToken();
     if (!token) { setError('No hay sesión activa'); setLoading(false); return; }
 
-    // ✅ Solo conectar socket en desarrollo — Vercel no soporta WebSockets
-    if (IS_DEV) {
-      initializeSocket(token);
-    }
-
+    // ✅ Siempre inicializar socket — Render soporta WebSockets
+    initializeSocket(token);
     loadAllChats();
-    const interval = setInterval(loadAllChats, 5000);
-    return () => clearInterval(interval);
+
+    // Polling de respaldo cada 10s por si el socket falla
+    const interval = setInterval(loadAllChats, 10000);
+    return () => {
+      clearInterval(interval);
+      if (socket) { socket.disconnect(); socket = null; }
+    };
   }, []);
 
   const initializeSocket = (token) => {
     if (socket) return;
 
+    console.log('🔌 [ADMIN] Conectando socket a:', SOCKET_URL);
+
     socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000
     });
 
-    socket.on('connect', () => { setConnected(true); socket.emit('authenticate', token); });
-    socket.on('disconnect', () => setConnected(false));
-    socket.on('authenticated', (data) => console.log('✅ [ADMIN] Autenticado:', data));
+    socket.on('connect', () => {
+      console.log('✅ [ADMIN] Socket conectado:', socket.id);
+      setConnected(true);
+      socket.emit('authenticate', token);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ [ADMIN] Socket desconectado');
+      setConnected(false);
+    });
+
+    socket.on('authenticated', (data) => {
+      console.log('✅ [ADMIN] Autenticado:', data);
+      loadAllChats();
+    });
 
     socket.on('new_user_message', (data) => {
       const chat = data?.chat || data;
@@ -77,7 +93,14 @@ const AdminChat = () => {
       if (chat?._id) handleChatClosed(chat);
     });
 
-    socket.on('message_error', (data) => alert('Error: ' + (data?.message || 'Error desconocido')));
+    socket.on('message_error', (data) => {
+      console.error('❌ Error socket:', data);
+      alert('Error: ' + (data?.message || 'Error desconocido'));
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('❌ Error conexión socket:', err.message);
+    });
   };
 
   const handleChatUpdate = (updatedChat) => {
@@ -136,20 +159,16 @@ const AdminChat = () => {
     e.preventDefault();
     if (!message.trim() || !selectedChat) return;
 
-    if (!IS_DEV) {
-      // En producción sin socket — usar API REST
-      const token = getToken();
-      axios.post(`${API_URL}/chat/admin/send`, {
-        chatId: selectedChat._id,
-        text: message
-      }, { headers: { Authorization: `Bearer ${token}` } })
-        .then(() => { setMessage(''); loadAllChats(); })
-        .catch(err => alert('Error al enviar: ' + err.message));
+    // ✅ Siempre usar socket — sin fallback REST
+    if (!socket || !connected) {
+      alert('Sin conexión. Espera a que se reconecte el chat.');
       return;
     }
 
-    if (!connected) return;
-    socket.emit('admin_send_message', { chatId: selectedChat._id, text: message });
+    socket.emit('admin_send_message', {
+      chatId: selectedChat._id,
+      text: message
+    });
     setMessage('');
   };
 
@@ -178,18 +197,11 @@ const AdminChat = () => {
             Abiertos: {openChats.length} • Cerrados: {closedChats.length} • Total: {openChats.length + closedChats.length}
           </small>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', background: IS_DEV ? (connected ? '#d4edda' : '#f8d7da') : '#fff3cd', borderRadius: '25px', fontSize: '14px', fontWeight: '600' }}>
-          <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: IS_DEV ? (connected ? '#28a745' : '#dc3545') : '#ffc107', display: 'inline-block' }}></span>
-          {IS_DEV ? (connected ? 'Conectado' : 'Desconectado') : 'Modo polling (5s)'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', background: connected ? '#d4edda' : '#f8d7da', borderRadius: '25px', fontSize: '14px', fontWeight: '600' }}>
+          <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: connected ? '#28a745' : '#dc3545', display: 'inline-block', animation: connected ? 'pulse 2s infinite' : 'none' }}></span>
+          {connected ? 'Conectado en tiempo real' : 'Reconectando...'}
         </div>
       </div>
-
-      {/* ✅ Aviso en producción */}
-      {!IS_DEV && (
-        <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '8px', padding: '12px 20px', marginBottom: '20px', fontSize: '14px', color: '#856404' }}>
-          ⚠️ El chat en tiempo real no está disponible en producción. Los mensajes se actualizan cada 5 segundos.
-        </div>
-      )}
 
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
         <button onClick={() => { setView('open'); setSelectedChat(null); }} style={{ padding: '12px 24px', borderRadius: '25px', border: 'none', background: view === 'open' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef', color: view === 'open' ? 'white' : '#495057', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}>
@@ -259,8 +271,14 @@ const AdminChat = () => {
 
               {selectedChat.status === 'open' ? (
                 <form onSubmit={sendMessage} style={{ padding: '20px', borderTop: '1px solid #dee2e6', display: 'flex', gap: '12px', background: 'white' }}>
-                  <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Escribe tu respuesta..." style={{ flex: 1, padding: '12px 16px', borderRadius: '25px', border: '2px solid #dee2e6', outline: 'none', fontSize: '14px' }} />
-                  <button type="submit" disabled={!message.trim()} style={{ background: message.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef', color: message.trim() ? 'white' : '#adb5bd', border: 'none', padding: '12px 28px', borderRadius: '25px', cursor: message.trim() ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>Enviar ✈️</button>
+                  <input type="text" value={message} onChange={(e) => setMessage(e.target.value)}
+                    placeholder={connected ? 'Escribe tu respuesta...' : 'Esperando conexión...'}
+                    disabled={!connected}
+                    style={{ flex: 1, padding: '12px 16px', borderRadius: '25px', border: '2px solid #dee2e6', outline: 'none', fontSize: '14px' }} />
+                  <button type="submit" disabled={!message.trim() || !connected}
+                    style={{ background: message.trim() && connected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef', color: message.trim() && connected ? 'white' : '#adb5bd', border: 'none', padding: '12px 28px', borderRadius: '25px', cursor: message.trim() && connected ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
+                    Enviar ✈️
+                  </button>
                 </form>
               ) : (
                 <div style={{ padding: '20px', borderTop: '1px solid #dee2e6', textAlign: 'center', color: '#6c757d', background: '#f8f9fa' }}>✓ Esta conversación está finalizada</div>
