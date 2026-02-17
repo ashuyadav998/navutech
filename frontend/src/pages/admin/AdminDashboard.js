@@ -25,37 +25,31 @@ const AdminDashboard = () => {
 
   // ✅ VERIFICAR AUTENTICACIÓN AL MONTAR
   useEffect(() => {
-    console.log('🔍 Verificando autenticación...');
-    console.log('isAuthenticated:', isAuthenticated());
-    console.log('user completo:', JSON.stringify(user, null, 2));
-    console.log('user.role:', user?.role);
-    console.log('token en sessionStorage:', !!sessionStorage.getItem('token'));
-    console.log('token en localStorage:', !!localStorage.getItem('token'));
+
 
     if (!isAuthenticated()) {
-      console.log('❌ No autenticado, redirigiendo al login en 2 segundos...');
+     
       const timer = setTimeout(() => navigate('/login'), 2000);
       return () => clearTimeout(timer);
     }
 
     // ✅ ESPERAR A QUE EL USUARIO ESTÉ CARGADO
     if (!user) {
-      console.log('⏳ Esperando a que se cargue el usuario...');
+     
       return;
     }
 
     // ✅ VERIFICAR SI ES ADMIN (MODO PERMISIVO)
-    console.log('👤 Usuario cargado, verificando rol...');
+   
     if (user.role !== 'admin') {
-      console.log('❌ Usuario no es admin. Rol actual:', user.role);
-      console.log('⚠️ Si eres admin, verifica que tu cuenta tenga role: "admin" en la base de datos');
+      
       // NO redirigir inmediatamente, dar tiempo para ver el error
       setError(`Acceso denegado. Tu rol es: "${user.role}". Necesitas rol "admin".`);
       setLoading(false);
       return;
     }
 
-    console.log('✅ Usuario es admin, cargando datos...');
+
     loadDashboardData();
   }, [isAuthenticated, user, navigate]);
 
@@ -69,10 +63,7 @@ const AdminDashboard = () => {
       // ✅ OBTENER TOKEN DE SESSIONSTORAGE (como está en tu AuthContext)
       const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       
-      console.log('🔑 Token en sessionStorage:', !!sessionStorage.getItem('token'));
-      console.log('🔑 Token en localStorage:', !!localStorage.getItem('token'));
-      console.log('🔑 Token final encontrado:', token ? 'SÍ' : 'NO');
-      console.log('🔑 Primeros caracteres:', token ? token.substring(0, 20) + '...' : 'N/A');
+
       
       if (!token) {
         console.log('❌ No hay token en sessionStorage ni localStorage');
