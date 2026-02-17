@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
   // --- FUNCIONES DE AUTH ---
   const login = async (email, password) => {
-    const res = await fetch('https://navutech.vercel.app/api/auth/login', {
+    const res = await fetch('https://navutech-backend.onrender.com/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
