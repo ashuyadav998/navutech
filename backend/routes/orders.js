@@ -7,9 +7,6 @@ const { auth, isAdmin } = require('./auth');
 const { autoCreateShipment } = require('../middleware/shipping.automation');
 const emailNotificationService = require('../services/email-notification.service');
 
-// ==========================================
-// CREAR PEDIDO (Usuario) — genera tracking automáticamente
-// ==========================================
 router.post('/', auth, async (req, res) => {
   try {
     const { items, totalAmount, shippingAddress, phone, paymentMethod, notes } = req.body;
@@ -36,7 +33,6 @@ router.post('/', auth, async (req, res) => {
 
     await order.save();
 
-    // ✅ Generar tracking automáticamente en background
     autoCreateShipment(order._id).catch(err =>
       console.error('❌ Error generando tracking automático:', err)
     );
@@ -47,9 +43,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// ==========================================
-// ACTUALIZAR ESTADO DEL PEDIDO CON EMAIL (Admin)
-// ==========================================
 router.put('/:id/status', auth, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -69,14 +62,17 @@ router.put('/:id/status', auth, isAdmin, async (req, res) => {
 
     await order.save();
 
-    if (orderStatus && orderStatus !== oldOrderStatus) {
-      if (!order.user?.email) {
-        console.warn('⚠️ Sin email para notificar. Order:', order._id);
-      } else {
-        emailNotificationService.sendOrderStatusUpdate(order, oldOrderStatus, orderStatus)
-          .then(() => console.log('✅ Email enviado'))
-          .catch(err => console.error('❌ Error email:', err));
-      }
+    // ✅ CORREGIDO: sendOrderStatusEmail con parámetros correctos
+    if (orderStatus && orderStatus !== oldOrderStatus && order.user?.email) {
+      emailNotificationService.sendOrderStatusEmail(
+        order.user.email,
+        order.user.name,
+        order._id.toString().slice(-8).toUpperCase(),
+        orderStatus,
+        order.tracking?.trackingNumber || ''
+      )
+        .then(() => console.log('✅ Email enviado'))
+        .catch(err => console.error('❌ Error email:', err));
     }
 
     res.json({
@@ -90,9 +86,6 @@ router.put('/:id/status', auth, isAdmin, async (req, res) => {
   }
 });
 
-// ==========================================
-// OBTENER MIS PEDIDOS (Usuario autenticado)
-// ==========================================
 router.get('/my-orders', auth, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id })
@@ -107,9 +100,6 @@ router.get('/my-orders', auth, async (req, res) => {
   }
 });
 
-// ==========================================
-// OBTENER TODOS LOS PEDIDOS (Admin)
-// ==========================================
 router.get('/', auth, isAdmin, async (req, res) => {
   try {
     const orders = await Order.find()
@@ -124,9 +114,6 @@ router.get('/', auth, isAdmin, async (req, res) => {
   }
 });
 
-// ==========================================
-// OBTENER UN PEDIDO POR ID
-// ==========================================
 router.get('/:orderId', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId)
@@ -145,9 +132,6 @@ router.get('/:orderId', auth, async (req, res) => {
   }
 });
 
-// ==========================================
-// MARCAR COMO IMPRESO (Admin)
-// ==========================================
 router.put('/:orderId/printed', auth, isAdmin, async (req, res) => {
   try {
     const order = await Order.findByIdAndUpdate(
@@ -166,9 +150,6 @@ router.put('/:orderId/printed', auth, isAdmin, async (req, res) => {
   }
 });
 
-// ==========================================
-// CANCELAR PEDIDO
-// ==========================================
 router.put('/:orderId/cancel', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId);
@@ -189,9 +170,6 @@ router.put('/:orderId/cancel', auth, async (req, res) => {
   }
 });
 
-// ==========================================
-// WEBHOOK: Confirmar pago de Stripe
-// ==========================================
 router.post('/webhook/payment-confirmed', async (req, res) => {
   try {
     const { orderId } = req.body;
