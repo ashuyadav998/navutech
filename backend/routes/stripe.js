@@ -193,12 +193,20 @@ router.post('/confirm-payment', auth, async (req, res) => {
     }
 
     // Enviar email de confirmación
-    try {
-      const user = await User.findById(req.userId);
-      await sendOrderConfirmation(order, user);
-    } catch (emailError) {
-      console.error('⚠️ Error enviando email (no crítico):', emailError.message);
-    }
+   try {
+  const user = await User.findById(req.userId);
+  if (user?.email) {
+    await sendOrderConfirmation(
+      user.email,
+      user.name,
+      order._id.toString().slice(-8).toUpperCase(),
+      order.items,
+      order.totalAmount
+    );
+  }
+} catch (emailError) {
+  console.error('⚠️ Error enviando email (no crítico):', emailError.message);
+}
 
     // Crear notificación de pedido
     try {
