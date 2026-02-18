@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const Tracking = require('../models/Tracking');
+const Notification = require('../models/Notification');
 const { auth, isAdmin } = require('./auth');
 const { autoCreateShipment } = require('../middleware/shipping.automation');
 const emailNotificationService = require('../services/email-notification.service');
