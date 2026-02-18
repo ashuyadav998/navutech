@@ -2,6 +2,7 @@
 const Tracking = require('../models/Tracking');
 const Order = require('../models/Order');
 const trackingMoreService = require('../services/trackingmore.service');
+const mockShipping = require('../services/mock-shipping.service');
 const emailService = require('../services/email-notification.service');
 
 function generateTrackingNumber() {
@@ -30,7 +31,7 @@ async function autoCreateShipment(orderId) {
     const trackingNumber = generateTrackingNumber();
     const carrier = 'correos-spain';
 
-    // Registrar en Trackingmore
+    // ✅ 1. REGISTRAR EN TRACKINGMORE (tracking real)
     const tmResult = await trackingMoreService.createTracking(
       trackingNumber,
       carrier,
@@ -39,31 +40,51 @@ async function autoCreateShipment(orderId) {
 
     if (!tmResult.success) {
       console.error(`❌ Error registrar en Trackingmore:`, tmResult.error);
+      // Continuar de todos modos — generamos PDF localmente
     }
 
-    // Crear documento de Tracking local
+    // ✅ 2. GENERAR PDF CON MOCK (etiqueta imprimible)
+    const orderData = {
+      customer: { name: order.user?.name || 'Cliente' },
+      shippingAddress: {
+        street:     order.shippingAddress?.street     || '',
+        city:       order.shippingAddress?.city       || '',
+        postalCode: order.shippingAddress?.postalCode || '',
+        province:   order.shippingAddress?.province   || '',
+        country:    order.shippingAddress?.country    || 'España'
+      },
+      phone:       order.phone || '',
+      orderNumber: order._id.toString().slice(-8).toUpperCase(),
+      weight:      0.5
+    };
+
+    const label = await mockShipping.createLabel(orderData, trackingNumber);
+
+    // ✅ 3. CREAR DOCUMENTO DE TRACKING LOCAL
     const tracking = new Tracking({
       trackingNumber,
       carrier: 'Correos España',
       order: order._id,
       currentStatus: 'pendiente',
       events: [{
-        status: 'pendiente', // ✅ minúscula para match con enum
+        status: 'pendiente',
         location: 'Centro de distribución',
         description: 'Etiqueta creada - En espera de recogida',
         timestamp: new Date()
       }],
       estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      labelData: null
+      labelData: label.labelData // ✅ PDF del mock
     });
 
     await tracking.save();
 
     order.tracking = tracking._id;
-    order.status = 'enviado';
+    order.orderStatus = 'enviado';
     await order.save();
 
     console.log(`✅ Tracking creado: ${trackingNumber} para pedido ${orderId}`);
+    console.log(`📄 PDF generado con mock`);
+    console.log(`📡 Registrado en Trackingmore: ${tmResult.success ? 'SÍ' : 'NO'}`);
 
     // Enviar email
     if (order.user?.email) {
@@ -131,7 +152,6 @@ async function updateTrackingStatus(trackingNumber) {
   }
 }
 
-// Mapear estados de Trackingmore a nuestro enum
 function mapStatus(tmStatus) {
   const map = {
     'pending': 'pendiente',
@@ -152,7 +172,7 @@ async function syncAllActiveShipments() {
       currentStatus: { $in: ['pendiente', 'en_preparacion', 'enviado', 'en_transito', 'en_reparto'] }
     });
 
-    console.log(`🔄 Sincronizando ${activeTrackings.length} envíos activos...`);
+    console.log(`🔄 Sincronizando ${activeTrackings.length} envíos activos con Trackingmore...`);
 
     for (const tracking of activeTrackings) {
       await updateTrackingStatus(tracking.trackingNumber);
