@@ -79,7 +79,7 @@ async function autoCreateShipment(orderId) {
     await tracking.save();
 
     order.tracking = tracking._id;
-    order.orderStatus = 'enviado';
+    order.orderStatus = 'procesando';
     await order.save();
 
     console.log(`✅ Tracking creado: ${trackingNumber} para pedido ${orderId}`);
