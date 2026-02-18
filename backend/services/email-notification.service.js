@@ -1,18 +1,34 @@
 // backend/services/email-notification.service.js
-const { Resend } = require('resend');
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = 'SimShop <ttechashu@gmail.com>';
+const nodemailer = require('nodemailer');
 
 class EmailNotificationService {
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      host: 'smtp-relay.brevo.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_SMTP_PASS
+      }
+    });
+
+    this.transporter.verify((error) => {
+      if (error) {
+        console.error('❌ Error en configuración de email:', error.message);
+      } else {
+        console.log('✅ Servidor de email listo (Brevo)');
+      }
+    });
+  }
 
   // ==========================================
   // 1. CÓDIGO DE VERIFICACIÓN
   // ==========================================
   async sendVerificationCode(email, code, name) {
     try {
-      await resend.emails.send({
-        from: FROM,
+      await this.transporter.sendMail({
+        from: '"SimShop" <noreply@simshop.com>',
         to: email,
         subject: `${code} — Tu código de verificación SimShop`,
         html: `
@@ -45,8 +61,8 @@ class EmailNotificationService {
   // ==========================================
   async sendWelcomeEmail(user) {
     try {
-      await resend.emails.send({
-        from: FROM,
+      await this.transporter.sendMail({
+        from: '"SimShop" <noreply@simshop.com>',
         to: user.email,
         subject: '🎉 ¡Bienvenido a SimShop!',
         html: `
@@ -92,8 +108,8 @@ class EmailNotificationService {
     const cfg = statusConfig[newStatus] || { emoji: '📦', label: newStatus, color: '#667eea', msg: 'El estado de tu pedido ha cambiado.' };
 
     try {
-      await resend.emails.send({
-        from: FROM,
+      await this.transporter.sendMail({
+        from: '"SimShop" <noreply@simshop.com>',
         to: email,
         subject: `${cfg.emoji} Tu pedido #${orderNumber} — ${cfg.label}`,
         html: `
@@ -142,8 +158,8 @@ class EmailNotificationService {
         </tr>
       `).join('');
 
-      await resend.emails.send({
-        from: FROM,
+      await this.transporter.sendMail({
+        from: '"SimShop" <noreply@simshop.com>',
         to: email,
         subject: `✅ Pedido confirmado #${orderNumber} — SimShop`,
         html: `
@@ -194,8 +210,8 @@ class EmailNotificationService {
   // ==========================================
   async sendPasswordChanged(user) {
     try {
-      await resend.emails.send({
-        from: FROM,
+      await this.transporter.sendMail({
+        from: '"SimShop" <noreply@simshop.com>',
         to: user.email,
         subject: '🔒 Tu contraseña ha sido cambiada — SimShop',
         html: `
