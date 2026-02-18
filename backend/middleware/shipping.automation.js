@@ -4,20 +4,13 @@ const Order = require('../models/Order');
 const trackingMoreService = require('../services/trackingmore.service');
 const emailService = require('../services/email-notification.service');
 
-// ==========================================
-// GENERAR NÚMERO DE TRACKING REALISTA
-// ==========================================
 function generateTrackingNumber() {
-  // Formato similar a Correos España: PQ123456789ES
   const prefix = 'PQ';
   const suffix = 'ES';
   const digits = Math.floor(100000000 + Math.random() * 900000000);
   return `${prefix}${digits}${suffix}`;
 }
 
-// ==========================================
-// CREAR ENVÍO CON TRACKINGMORE
-// ==========================================
 async function autoCreateShipment(orderId) {
   try {
     const order = await Order.findById(orderId).populate('user');
@@ -26,7 +19,6 @@ async function autoCreateShipment(orderId) {
       return;
     }
 
-    // Verificar si ya tiene tracking
     if (order.tracking) {
       const existingTracking = await Tracking.findById(order.tracking);
       if (existingTracking) {
@@ -35,9 +27,8 @@ async function autoCreateShipment(orderId) {
       }
     }
 
-    // Generar tracking number
     const trackingNumber = generateTrackingNumber();
-    const carrier = 'correos-es';
+    const carrier = 'correos-spain';
 
     // Registrar en Trackingmore
     const tmResult = await trackingMoreService.createTracking(
@@ -48,35 +39,33 @@ async function autoCreateShipment(orderId) {
 
     if (!tmResult.success) {
       console.error(`❌ Error registrar en Trackingmore:`, tmResult.error);
-      // Continuar de todos modos — guardamos el tracking localmente
     }
 
     // Crear documento de Tracking local
     const tracking = new Tracking({
       trackingNumber,
-      carrier: 'Correos Express',
+      carrier: 'Correos España',
       order: order._id,
-      status: 'pendiente',
+      currentStatus: 'pendiente',
       events: [{
-        date: new Date(),
+        status: 'pendiente', // ✅ minúscula para match con enum
         location: 'Centro de distribución',
         description: 'Etiqueta creada - En espera de recogida',
-        status: 'Pendiente'
+        timestamp: new Date()
       }],
-      estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 días
-      labelData: null // Trackingmore no genera PDFs, usar mock o ShipEngine
+      estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      labelData: null
     });
 
     await tracking.save();
 
-    // Asignar tracking al pedido
     order.tracking = tracking._id;
     order.status = 'enviado';
     await order.save();
 
     console.log(`✅ Tracking creado: ${trackingNumber} para pedido ${orderId}`);
 
-    // Enviar email de confirmación
+    // Enviar email
     if (order.user?.email) {
       await emailService.sendOrderStatusEmail(
         order.user.email,
@@ -84,7 +73,7 @@ async function autoCreateShipment(orderId) {
         order._id.toString().slice(-8).toUpperCase(),
         'enviado',
         trackingNumber
-      ).catch(err => console.error('Error email:', err));
+      ).catch(err => console.error('❌ Error email:', err));
     }
 
   } catch (error) {
@@ -92,9 +81,6 @@ async function autoCreateShipment(orderId) {
   }
 }
 
-// ==========================================
-// ACTUALIZAR ESTADO DESDE TRACKINGMORE
-// ==========================================
 async function updateTrackingStatus(trackingNumber) {
   try {
     const tmResult = await trackingMoreService.getTracking(trackingNumber);
@@ -104,57 +90,72 @@ async function updateTrackingStatus(trackingNumber) {
       return;
     }
 
-    // Actualizar en BD local
     const tracking = await Tracking.findOne({ trackingNumber });
     if (!tracking) {
       console.error(`❌ Tracking ${trackingNumber} no encontrado en BD local`);
       return;
     }
 
-    tracking.status = tmResult.status;
-    tracking.events = tmResult.events;
-    tracking.lastUpdate = new Date();
+    // Mapear eventos de Trackingmore a nuestro enum
+    const mappedEvents = tmResult.events.map(event => ({
+      status: mapStatus(tmResult.status),
+      location: event.location || '',
+      description: event.description || '',
+      timestamp: new Date(event.date || event.time)
+    }));
+
+    tracking.currentStatus = mapStatus(tmResult.status);
+    tracking.events = mappedEvents;
     await tracking.save();
 
-    // Actualizar estado del pedido
+    // Actualizar pedido
     const order = await Order.findById(tracking.order).populate('user');
-    if (order && order.status !== tmResult.status) {
-      order.status = tmResult.status;
+    if (order && order.status !== tracking.currentStatus) {
+      order.status = tracking.currentStatus;
       await order.save();
 
-      // Enviar email de cambio de estado
       if (order.user?.email) {
         await emailService.sendOrderStatusEmail(
           order.user.email,
           order.user.name,
           order._id.toString().slice(-8).toUpperCase(),
-          tmResult.status,
+          tracking.currentStatus,
           trackingNumber
-        ).catch(err => console.error('Error email:', err));
+        ).catch(err => console.error('❌ Error email:', err));
       }
     }
 
-    console.log(`✅ Tracking ${trackingNumber} actualizado: ${tmResult.status}`);
+    console.log(`✅ Tracking ${trackingNumber} actualizado: ${tracking.currentStatus}`);
   } catch (error) {
     console.error(`❌ Error actualizar tracking:`, error);
   }
 }
 
-// ==========================================
-// CRON: ACTUALIZAR TODOS LOS ENVÍOS ACTIVOS
-// ==========================================
+// Mapear estados de Trackingmore a nuestro enum
+function mapStatus(tmStatus) {
+  const map = {
+    'pending': 'pendiente',
+    'notfound': 'pendiente',
+    'transit': 'en_transito',
+    'pickup': 'en_preparacion',
+    'delivered': 'entregado',
+    'undelivered': 'en_reparto',
+    'exception': 'incidencia',
+    'expired': 'devuelto'
+  };
+  return map[tmStatus] || 'en_transito';
+}
+
 async function syncAllActiveShipments() {
   try {
-    // Obtener todos los trackings activos de la BD
     const activeTrackings = await Tracking.find({
-      status: { $in: ['pendiente', 'enviado'] }
+      currentStatus: { $in: ['pendiente', 'en_preparacion', 'enviado', 'en_transito', 'en_reparto'] }
     });
 
     console.log(`🔄 Sincronizando ${activeTrackings.length} envíos activos...`);
 
     for (const tracking of activeTrackings) {
       await updateTrackingStatus(tracking.trackingNumber);
-      // Delay entre peticiones para no saturar API
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
