@@ -20,7 +20,7 @@ const AdminOrders = () => {
   useEffect(() => {
     loadOrders(true);
     if (Notification.permission === 'default') Notification.requestPermission();
-    const interval = setInterval(() => loadOrders(false), 30000);
+    const interval = setInterval(() => loadOrders(false), 10000); // ✅ 10s en vez de 30s
     return () => clearInterval(interval);
   }, []);
 
@@ -33,6 +33,16 @@ const AdminOrders = () => {
       handleNewOrderNotification(newOrders);
     }
   }, [orders]);
+
+  // ✅ NUEVO: Actualizar statusUpdate cuando selectedOrder cambie
+  useEffect(() => {
+    if (selectedOrder) {
+      setStatusUpdate({
+        orderStatus: selectedOrder.orderStatus,
+        paymentStatus: selectedOrder.paymentStatus
+      });
+    }
+  }, [selectedOrder]);
 
   const handleNewOrderNotification = (newOrders) => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -78,7 +88,6 @@ const AdminOrders = () => {
 
   const downloadLabel = async (order) => {
     try {
-      // ✅ Comprobar trackingNumber en el objeto populado o directamente
       const trackingNumber = order.tracking?.trackingNumber;
       if (!trackingNumber) {
         toast.error('Etiqueta aún no disponible, pulsa Actualizar en unos segundos');
@@ -144,21 +153,34 @@ const AdminOrders = () => {
 
   const closeDetailModal = () => { setShowDetailModal(false); setSelectedOrder(null); };
 
+  // ✅ MEJORADO: Actualizar y refrescar selectedOrder
   const updateOrderStatus = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      await axios.put(`${API_URL}/orders/${selectedOrder._id}/status`, statusUpdate, {
+      await axios.put(
+        `${API_URL}/orders/${selectedOrder._id}/status`,
+        statusUpdate,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success('✅ Estado actualizado y notificación enviada al cliente');
+      
+      // Recargar la lista
+      await loadOrders(false);
+      
+      // Actualizar selectedOrder con la nueva data
+      const response = await axios.get(`${API_URL}/orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('✅ Estado actualizado y notificación enviada al cliente');
-      closeDetailModal();
-      loadOrders(false);
+      const updatedOrder = response.data.find(o => o._id === selectedOrder._id);
+      if (updatedOrder) {
+        setSelectedOrder(updatedOrder);
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al actualizar');
     }
   };
 
-  // ✅ Función para forzar generación de etiqueta en pedidos viejos sin tracking
   const forceGenerateLabel = async (orderId) => {
     try {
       const token = sessionStorage.getItem('token');
@@ -215,7 +237,6 @@ const AdminOrders = () => {
                 <td><span className={`badge ${getStatusBadge(order.paymentStatus)}`}>{getStatusLabel(order.paymentStatus)}</span></td>
                 <td><span className={`badge ${getStatusBadge(order.orderStatus)}`}>{getStatusLabel(order.orderStatus)}</span></td>
                 <td>
-                  {/* ✅ Comprueba trackingNumber específicamente, no solo order.tracking */}
                   {order.tracking?.trackingNumber ? (
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className="btn-table btn-pdf" onClick={() => downloadLabel(order)} title="Descargar etiqueta PDF">
@@ -226,7 +247,6 @@ const AdminOrders = () => {
                       </button>
                     </div>
                   ) : (
-                    // Pedidos viejos sin tracking — botón para forzar generación
                     <button
                       className="btn-table"
                       style={{ fontSize: '0.75rem', background: '#f39c12', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}
@@ -301,7 +321,7 @@ const AdminOrders = () => {
                   <h4>🚚 Información de Envío</h4>
                   <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
                     <p><strong>Tracking:</strong> {selectedOrder.tracking.trackingNumber}</p>
-                    <p><strong>Transportista:</strong> {selectedOrder.tracking.carrier || 'Correos Express (Simulado)'}</p>
+                    <p><strong>Transportista:</strong> {selectedOrder.tracking.carrier || 'Correos Express'}</p>
                     <p><strong>Estado:</strong> {selectedOrder.tracking.currentStatus || 'en_preparacion'}</p>
                     <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
                       <button className="btn-update-status" onClick={() => downloadLabel(selectedOrder)} style={{ flex: 1 }}>
