@@ -1,25 +1,17 @@
 // backend/services/email-notification.service.js
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+const FROM_EMAIL = process.env.EMAIL_USER || 'noreply@simshop.com';
 
 class EmailNotificationService {
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.BREVO_SMTP_USER,
-        pass: process.env.BREVO_SMTP_PASS
-      }
-    });
-
-    this.transporter.verify((error) => {
-      if (error) {
-        console.error('❌ Error en configuración de email:', error.message);
-      } else {
-        console.log('✅ Servidor de email listo (Brevo)');
-      }
-    });
+    if (process.env.SENDGRID_API_KEY) {
+      console.log('✅ SendGrid configurado correctamente');
+    } else {
+      console.error('❌ SENDGRID_API_KEY no encontrada');
+    }
   }
 
   // ==========================================
@@ -27,9 +19,9 @@ class EmailNotificationService {
   // ==========================================
   async sendVerificationCode(email, code, name) {
     try {
-      await this.transporter.sendMail({
-        from: '"SimShop" <noreply@simshop.com>',
+      await sgMail.send({
         to: email,
+        from: FROM_EMAIL,
         subject: `${code} — Tu código de verificación SimShop`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -61,9 +53,9 @@ class EmailNotificationService {
   // ==========================================
   async sendWelcomeEmail(user) {
     try {
-      await this.transporter.sendMail({
-        from: '"SimShop" <noreply@simshop.com>',
+      await sgMail.send({
         to: user.email,
+        from: FROM_EMAIL,
         subject: '🎉 ¡Bienvenido a SimShop!',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -76,7 +68,7 @@ class EmailNotificationService {
               <p>Tu cuenta ha sido creada correctamente. Ya puedes explorar nuestro catálogo y realizar pedidos.</p>
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${process.env.FRONTEND_URL || 'https://navutech.netlify.app'}" 
-                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
                   Ir a la tienda →
                 </a>
               </div>
@@ -108,9 +100,9 @@ class EmailNotificationService {
     const cfg = statusConfig[newStatus] || { emoji: '📦', label: newStatus, color: '#667eea', msg: 'El estado de tu pedido ha cambiado.' };
 
     try {
-      await this.transporter.sendMail({
-        from: '"SimShop" <noreply@simshop.com>',
+      await sgMail.send({
         to: email,
+        from: FROM_EMAIL,
         subject: `${cfg.emoji} Tu pedido #${orderNumber} — ${cfg.label}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -128,7 +120,7 @@ class EmailNotificationService {
               </div>
               <div style="text-align: center; margin: 25px 0;">
                 <a href="${process.env.FRONTEND_URL || 'https://navutech.netlify.app'}/perfil" 
-                   style="background: ${cfg.color}; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">
+                   style="background: ${cfg.color}; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">
                   Ver mis pedidos →
                 </a>
               </div>
@@ -158,9 +150,9 @@ class EmailNotificationService {
         </tr>
       `).join('');
 
-      await this.transporter.sendMail({
-        from: '"SimShop" <noreply@simshop.com>',
+      await sgMail.send({
         to: email,
+        from: FROM_EMAIL,
         subject: `✅ Pedido confirmado #${orderNumber} — SimShop`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -188,7 +180,7 @@ class EmailNotificationService {
               </table>
               <div style="text-align: center; margin: 25px 0;">
                 <a href="${process.env.FRONTEND_URL || 'https://navutech.netlify.app'}/perfil"
-                   style="background: #27ae60; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">
+                   style="background: #27ae60; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">
                   Ver mis pedidos →
                 </a>
               </div>
@@ -210,9 +202,9 @@ class EmailNotificationService {
   // ==========================================
   async sendPasswordChanged(user) {
     try {
-      await this.transporter.sendMail({
-        from: '"SimShop" <noreply@simshop.com>',
+      await sgMail.send({
         to: user.email,
+        from: FROM_EMAIL,
         subject: '🔒 Tu contraseña ha sido cambiada — SimShop',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
