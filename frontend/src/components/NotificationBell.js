@@ -78,7 +78,7 @@ const NotificationBell = () => {
     if (notification.link) {
       navigate(notification.link);
     } else if (notification.type === 'order') {
-      navigate('/perfil?tab=orders');
+      navigate('/notifications?tab=orders');
     }
   };
 
