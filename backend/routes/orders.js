@@ -61,6 +61,79 @@ router.put('/:id/status', auth, isAdmin, async (req, res) => {
     if (paymentStatus) order.paymentStatus = paymentStatus;
 
     await order.save();
+    // En routes/orders.js — línea ~75 de updateOrderStatus
+
+router.put('/:id/status', auth, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { orderStatus, paymentStatus } = req.body;
+
+    const order = await Order.findById(id)
+      .populate('user', 'name email')
+      .populate('tracking');
+
+    if (!order)
+      return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
+
+    const oldOrderStatus = order.orderStatus;
+
+    if (orderStatus) order.orderStatus = orderStatus;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+
+    await order.save();
+
+    // ✅ NUEVO: Sincronizar estado con Tracking
+    if (orderStatus && order.tracking) {
+      const tracking = await Tracking.findById(order.tracking);
+      if (tracking) {
+        // Mapear estados de Order a Tracking
+        const statusMap = {
+          'pendiente': 'pendiente',
+          'procesando': 'en_preparacion',
+          'enviado': 'en_transito',
+          'entregado': 'entregado',
+          'cancelado': 'devuelto'
+        };
+
+        const newTrackingStatus = statusMap[orderStatus] || 'en_transito';
+
+        // Solo actualizar si cambió
+        if (tracking.currentStatus !== newTrackingStatus) {
+          tracking.currentStatus = newTrackingStatus;
+          tracking.events.push({
+            status: newTrackingStatus,
+            location: 'Actualizado por administrador',
+            description: `Estado cambiado a: ${orderStatus}`,
+            timestamp: new Date()
+          });
+          await tracking.save();
+          console.log(`✅ Tracking actualizado: ${newTrackingStatus}`);
+        }
+      }
+    }
+
+    if (orderStatus && orderStatus !== oldOrderStatus && order.user?.email) {
+      emailNotificationService.sendOrderStatusEmail(
+        order.user.email,
+        order.user.name,
+        order._id.toString().slice(-8).toUpperCase(),
+        orderStatus,
+        order.tracking?.trackingNumber || ''
+      )
+        .then(() => console.log('✅ Email enviado'))
+        .catch(err => console.error('❌ Error email:', err));
+    }
+
+    res.json({
+      success: true,
+      message: 'Estado actualizado y notificación enviada',
+      order: { _id: order._id, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus }
+    });
+  } catch (error) {
+    console.error('Error actualizando estado:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar el estado', error: error.message });
+  }
+});
 
     // ✅ CORREGIDO: sendOrderStatusEmail con parámetros correctos
     if (orderStatus && orderStatus !== oldOrderStatus && order.user?.email) {
