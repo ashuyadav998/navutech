@@ -33,11 +33,7 @@ router.post('/', auth, async (req, res) => {
     });
 
     await order.save();
-
-    autoCreateShipment(order._id).catch(err =>
-      console.error('❌ Error generando tracking automático:', err)
-    );
-
+    autoCreateShipment(order._id).catch(err => console.error('❌ Error generando tracking automático:', err));
     res.status(201).json({ message: 'Pedido creado exitosamente', order });
   } catch (error) {
     res.status(500).json({ error: 'Error al crear pedido', message: error.message });
@@ -49,111 +45,36 @@ router.put('/:id/status', auth, isAdmin, async (req, res) => {
     const { id } = req.params;
     const { orderStatus, paymentStatus } = req.body;
 
-    const order = await Order.findById(id)
-      .populate('user', 'name email')
-      .populate('tracking');
-
-    if (!order)
-      return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
+    const order = await Order.findById(id).populate('user', 'name email').populate('tracking');
+    if (!order) return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
 
     const oldOrderStatus = order.orderStatus;
-
     if (orderStatus) order.orderStatus = orderStatus;
     if (paymentStatus) order.paymentStatus = paymentStatus;
-
-    await order.save();
-    // En routes/orders.js — línea ~75 de updateOrderStatus
-
-router.put('/:id/status', auth, isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { orderStatus, paymentStatus } = req.body;
-
-    const order = await Order.findById(id)
-      .populate('user', 'name email')
-      .populate('tracking');
-
-    if (!order)
-      return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
-
-    const oldOrderStatus = order.orderStatus;
-
-    if (orderStatus) order.orderStatus = orderStatus;
-    if (paymentStatus) order.paymentStatus = paymentStatus;
-
     await order.save();
 
-    // ✅ NUEVO: Sincronizar estado con Tracking
+    // Sincronizar tracking
     if (orderStatus && order.tracking) {
       const tracking = await Tracking.findById(order.tracking);
       if (tracking) {
-        // Mapear estados de Order a Tracking
-        const statusMap = {
-          'pendiente': 'pendiente',
-          'procesando': 'en_preparacion',
-          'enviado': 'en_transito',
-          'entregado': 'entregado',
-          'cancelado': 'devuelto'
-        };
-
-        router.put('/:id/status', auth, isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { orderStatus, paymentStatus } = req.body;
-
-    const order = await Order.findById(id)
-      .populate('user', 'name email')
-      .populate('tracking');
-
-    if (!order)
-      return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
-
-    const oldOrderStatus = order.orderStatus;
-
-    if (orderStatus) order.orderStatus = orderStatus;
-    if (paymentStatus) order.paymentStatus = paymentStatus;
-
-    await order.save();
-
-    // Sincronizar tracking (el código que ya tienes)
-    if (orderStatus && order.tracking) {
-      const tracking = await Tracking.findById(order.tracking);
-      if (tracking) {
-        const statusMap = {
-          'pendiente': 'pendiente',
-          'procesando': 'en_preparacion',
-          'enviado': 'en_transito',
-          'entregado': 'entregado',
-          'cancelado': 'devuelto'
-        };
+        const statusMap = { 'pendiente': 'pendiente', 'procesando': 'en_preparacion', 'enviado': 'en_transito', 'entregado': 'entregado', 'cancelado': 'devuelto' };
         const newTrackingStatus = statusMap[orderStatus] || 'en_transito';
         if (tracking.currentStatus !== newTrackingStatus) {
           tracking.currentStatus = newTrackingStatus;
-          tracking.events.push({
-            status: newTrackingStatus,
-            location: 'Actualizado por administrador',
-            description: `Estado cambiado a: ${orderStatus}`,
-            timestamp: new Date()
-          });
+          tracking.events.push({ status: newTrackingStatus, location: 'Actualizado por administrador', description: `Estado cambiado a: ${orderStatus}`, timestamp: new Date() });
           await tracking.save();
+          console.log(`✅ Tracking actualizado: ${newTrackingStatus}`);
         }
       }
     }
 
-    // Enviar email
+    // Email
     if (orderStatus && orderStatus !== oldOrderStatus && order.user?.email) {
-      emailNotificationService.sendOrderStatusEmail(
-        order.user.email,
-        order.user.name,
-        order._id.toString().slice(-8).toUpperCase(),
-        orderStatus,
-        order.tracking?.trackingNumber || ''
-      )
-        .then(() => console.log('✅ Email enviado'))
-        .catch(err => console.error('❌ Error email:', err));
+      emailNotificationService.sendOrderStatusEmail(order.user.email, order.user.name, order._id.toString().slice(-8).toUpperCase(), orderStatus, order.tracking?.trackingNumber || '')
+        .then(() => console.log('✅ Email enviado')).catch(err => console.error('❌ Error email:', err));
     }
 
-    // ✅ NUEVO: Crear notificación para el usuario
+    // Notificación
     if (orderStatus && orderStatus !== oldOrderStatus) {
       const statusMessages = {
         'procesando': { emoji: '⚙️', title: 'Pedido en Proceso', msg: 'Tu pedido está siendo preparado' },
@@ -161,94 +82,16 @@ router.put('/:id/status', auth, isAdmin, async (req, res) => {
         'entregado': { emoji: '✅', title: 'Pedido Entregado', msg: '¡Tu pedido ha sido entregado!' },
         'cancelado': { emoji: '❌', title: 'Pedido Cancelado', msg: 'Tu pedido ha sido cancelado' }
       };
-
       const notification = statusMessages[orderStatus];
       if (notification) {
         try {
-          await Notification.create({
-            user: order.user._id,
-            type: 'order',
-            title: `${notification.emoji} ${notification.title}`,
-            message: notification.msg,
-            link: `/perfil`,
-            icon: 'truck'
-          });
-          console.log('✅ Notificación creada para el usuario');
-        } catch (notifError) {
-          console.error('⚠️ Error creando notificación:', notifError);
-        }
+          await Notification.create({ user: order.user._id, type: 'order', title: `${notification.emoji} ${notification.title}`, message: notification.msg, link: `/perfil`, icon: 'truck' });
+          console.log('✅ Notificación creada');
+        } catch (notifError) { console.error('⚠️ Error creando notificación:', notifError); }
       }
     }
 
-    res.json({
-      success: true,
-      message: 'Estado actualizado y notificación enviada',
-      order: { _id: order._id, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus }
-    });
-  } catch (error) {
-    console.error('Error actualizando estado:', error);
-    res.status(500).json({ success: false, message: 'Error al actualizar el estado', error: error.message });
-  }
-});
-
-        const newTrackingStatus = statusMap[orderStatus] || 'en_transito';
-
-        // Solo actualizar si cambió
-        if (tracking.currentStatus !== newTrackingStatus) {
-          tracking.currentStatus = newTrackingStatus;
-          tracking.events.push({
-            status: newTrackingStatus,
-            location: 'Actualizado por administrador',
-            description: `Estado cambiado a: ${orderStatus}`,
-            timestamp: new Date()
-          });
-          await tracking.save();
-          console.log(`✅ Tracking actualizado: ${newTrackingStatus}`);
-        }
-      }
-    }
-
-    if (orderStatus && orderStatus !== oldOrderStatus && order.user?.email) {
-      emailNotificationService.sendOrderStatusEmail(
-        order.user.email,
-        order.user.name,
-        order._id.toString().slice(-8).toUpperCase(),
-        orderStatus,
-        order.tracking?.trackingNumber || ''
-      )
-        .then(() => console.log('✅ Email enviado'))
-        .catch(err => console.error('❌ Error email:', err));
-    }
-
-    res.json({
-      success: true,
-      message: 'Estado actualizado y notificación enviada',
-      order: { _id: order._id, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus }
-    });
-  } catch (error) {
-    console.error('Error actualizando estado:', error);
-    res.status(500).json({ success: false, message: 'Error al actualizar el estado', error: error.message });
-  }
-});
-
-    // ✅ CORREGIDO: sendOrderStatusEmail con parámetros correctos
-    if (orderStatus && orderStatus !== oldOrderStatus && order.user?.email) {
-      emailNotificationService.sendOrderStatusEmail(
-        order.user.email,
-        order.user.name,
-        order._id.toString().slice(-8).toUpperCase(),
-        orderStatus,
-        order.tracking?.trackingNumber || ''
-      )
-        .then(() => console.log('✅ Email enviado'))
-        .catch(err => console.error('❌ Error email:', err));
-    }
-
-    res.json({
-      success: true,
-      message: 'Estado actualizado y notificación enviada',
-      order: { _id: order._id, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus }
-    });
+    res.json({ success: true, message: 'Estado actualizado y notificación enviada', order: { _id: order._id, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus } });
   } catch (error) {
     console.error('Error actualizando estado:', error);
     res.status(500).json({ success: false, message: 'Error al actualizar el estado', error: error.message });
@@ -257,12 +100,7 @@ router.put('/:id/status', auth, isAdmin, async (req, res) => {
 
 router.get('/my-orders', auth, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user.id })
-      .populate('items.product')
-      .populate({ path: 'tracking', select: 'trackingNumber carrier currentStatus estimatedDelivery trackingUrl events' })
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-
+    const orders = await Order.find({ user: req.user.id }).populate('items.product').populate({ path: 'tracking', select: 'trackingNumber carrier currentStatus estimatedDelivery trackingUrl events' }).populate('user', 'name email').sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener pedidos', message: error.message });
@@ -271,12 +109,7 @@ router.get('/my-orders', auth, async (req, res) => {
 
 router.get('/', auth, isAdmin, async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('items.product')
-      .populate('tracking')
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-
+    const orders = await Order.find().populate('items.product').populate('tracking').populate('user', 'name email').sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener pedidos', message: error.message });
@@ -285,16 +118,9 @@ router.get('/', auth, isAdmin, async (req, res) => {
 
 router.get('/:orderId', auth, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.orderId)
-      .populate('items.product')
-      .populate('tracking')
-      .populate('user', 'name email');
-
+    const order = await Order.findById(req.params.orderId).populate('items.product').populate('tracking').populate('user', 'name email');
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
-
-    if (order.user._id.toString() !== req.user.id && req.user.role !== 'admin')
-      return res.status(403).json({ error: 'No tienes permiso para ver este pedido' });
-
+    if (order.user._id.toString() !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'No tienes permiso para ver este pedido' });
     res.json(order);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener pedido' });
@@ -303,16 +129,12 @@ router.get('/:orderId', auth, async (req, res) => {
 
 router.put('/:orderId/printed', auth, isAdmin, async (req, res) => {
   try {
-    const order = await Order.findByIdAndUpdate(
-      req.params.orderId, { needsPrinting: false }, { new: true }
-    );
+    const order = await Order.findByIdAndUpdate(req.params.orderId, { needsPrinting: false }, { new: true });
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
-
     if (order.tracking) {
       const tracking = await Tracking.findById(order.tracking);
       if (tracking) await tracking.markAsPrinted();
     }
-
     res.json({ message: 'Pedido marcado como impreso', order });
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar pedido' });
@@ -323,16 +145,10 @@ router.put('/:orderId/cancel', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId);
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
-
-    if (order.user.toString() !== req.user.id && req.user.role !== 'admin')
-      return res.status(403).json({ error: 'No tienes permiso para cancelar este pedido' });
-
-    if (['enviado', 'entregado'].includes(order.orderStatus))
-      return res.status(400).json({ error: 'No se puede cancelar un pedido ya enviado' });
-
+    if (order.user.toString() !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'No tienes permiso para cancelar este pedido' });
+    if (['enviado', 'entregado'].includes(order.orderStatus)) return res.status(400).json({ error: 'No se puede cancelar un pedido ya enviado' });
     order.orderStatus = 'cancelado';
     await order.save();
-
     res.json({ message: 'Pedido cancelado', order });
   } catch (error) {
     res.status(500).json({ error: 'Error al cancelar pedido' });
@@ -344,13 +160,10 @@ router.post('/webhook/payment-confirmed', async (req, res) => {
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
-
     order.paymentStatus = 'pagado';
     order.orderStatus = 'procesando';
     await order.save();
-
     autoCreateShipment(orderId).catch(err => console.error('Error en automatización:', err));
-
     res.json({ message: 'Pago confirmado y envío en proceso' });
   } catch (error) {
     res.status(500).json({ error: 'Error al procesar webhook' });
