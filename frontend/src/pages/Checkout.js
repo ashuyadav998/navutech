@@ -257,7 +257,7 @@ const Checkout = () => {
 
       clearCart();
       alert('¡Pago realizado con éxito!');
-      navigate('/perfil');
+      navigate('/');
     } catch (error) {
       console.error('❌ Error al confirmar pedido:', error);
       
