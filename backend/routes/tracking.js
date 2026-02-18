@@ -6,9 +6,6 @@ const { auth, isAdmin } = require('./auth');
 const mockShipping = require('../services/mock-shipping.service');
 const emailService = require('../services/email-notification.service');
 
-// ==========================================
-// CREAR ENVÍO (Admin)
-// ==========================================
 router.post('/create', auth, isAdmin, async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -16,7 +13,6 @@ router.post('/create', auth, isAdmin, async (req, res) => {
 
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
 
-    // Evitar duplicados
     const existing = await Tracking.findOne({ order: orderId });
     if (existing) {
       if (!order.tracking) {
@@ -26,7 +22,6 @@ router.post('/create', auth, isAdmin, async (req, res) => {
       return res.status(200).json({ message: 'Ya tenía tracking', tracking: existing });
     }
 
-    // ✅ Mapear igual que en shipping.automation.js
     const orderData = {
       customer: { name: order.user?.name || 'Cliente' },
       shippingAddress: {
@@ -64,8 +59,16 @@ router.post('/create', auth, isAdmin, async (req, res) => {
     order.orderStatus = 'enviado';
     await order.save();
 
-    emailService.sendOrderStatusUpdate(order, 'procesando', 'enviado')
-      .catch(err => console.error('❌ Error email:', err));
+    // ✅ Corregido: sendOrderStatusEmail con parámetros correctos
+    if (order.user?.email) {
+      emailService.sendOrderStatusEmail(
+        order.user.email,
+        order.user.name,
+        order._id.toString().slice(-8).toUpperCase(),
+        'enviado',
+        shipment.trackingNumber
+      ).catch(err => console.error('❌ Error email:', err));
+    }
 
     res.status(201).json({ message: 'Envío creado y email enviado', tracking });
   } catch (error) {
@@ -74,9 +77,6 @@ router.post('/create', auth, isAdmin, async (req, res) => {
   }
 });
 
-// ==========================================
-// DESCARGAR ETIQUETA — /tracking/:trackingNumber/label
-// ==========================================
 router.get('/:trackingNumber/label', auth, async (req, res) => {
   try {
     const tracking = await Tracking.findOne({ trackingNumber: req.params.trackingNumber });
@@ -97,9 +97,6 @@ router.get('/:trackingNumber/label', auth, async (req, res) => {
   }
 });
 
-// ==========================================
-// VER ETIQUETA EN NAVEGADOR — /tracking/:trackingNumber/label/preview
-// ==========================================
 router.get('/:trackingNumber/label/preview', async (req, res) => {
   try {
     const token = req.query.token;
@@ -126,9 +123,6 @@ router.get('/:trackingNumber/label/preview', async (req, res) => {
   }
 });
 
-// ==========================================
-// ACTUALIZAR ESTADO (Admin)
-// ==========================================
 router.put('/:trackingId/status', auth, isAdmin, async (req, res) => {
   try {
     const { status, description } = req.body;
@@ -148,7 +142,16 @@ router.put('/:trackingId/status', auth, isAdmin, async (req, res) => {
       await tracking.order.save();
     }
 
-    await emailService.sendOrderStatusUpdate(tracking.order, oldStatus, status);
+    // ✅ Corregido: sendOrderStatusEmail con parámetros correctos
+    if (tracking.order.user?.email) {
+      await emailService.sendOrderStatusEmail(
+        tracking.order.user.email,
+        tracking.order.user.name,
+        tracking.order._id.toString().slice(-8).toUpperCase(),
+        status,
+        tracking.trackingNumber
+      ).catch(err => console.error('❌ Error email:', err));
+    }
 
     res.json(tracking);
   } catch (error) {
