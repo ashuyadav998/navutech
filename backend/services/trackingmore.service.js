@@ -15,7 +15,7 @@ class TrackingMoreService {
   // ==========================================
   // 1. CREAR TRACKING
   // ==========================================
-  async createTracking(trackingNumber, carrier = 'correos-es', orderNumber) {
+  async createTracking(trackingNumber, carrier = 'correos-spain', orderNumber) {
     try {
       const response = await axios.post(
         `${API_URL}/trackings/create`,
@@ -48,7 +48,7 @@ class TrackingMoreService {
   // ==========================================
   // 2. OBTENER ESTADO DEL TRACKING
   // ==========================================
-  async getTracking(trackingNumber, carrier = 'correos-es') {
+  async getTracking(trackingNumber, carrier = 'correos-spain') {
     try {
       const response = await axios.get(
         `${API_URL}/trackings/${carrier}/${trackingNumber}`,
@@ -121,7 +121,7 @@ class TrackingMoreService {
   // ==========================================
   // 4. ELIMINAR TRACKING (si es necesario)
   // ==========================================
-  async deleteTracking(trackingNumber, carrier = 'correos-es') {
+  async deleteTracking(trackingNumber, carrier = 'correos-spain') {
     try {
       await axios.delete(
         `${API_URL}/trackings/${carrier}/${trackingNumber}`,
@@ -148,11 +148,11 @@ class TrackingMoreService {
 
       const carriers = response.data.data || [];
       // Preferir correos-es si está en la lista
-      const correos = carriers.find(c => c.courier_code === 'correos-es');
-      return correos ? 'correos-es' : carriers[0]?.courier_code || 'correos-es';
+      const correos = carriers.find(c => c.courier_code === 'correos-spain');
+      return correos ? 'correos-spain' : carriers[0]?.courier_code || 'correos-spain';
     } catch (error) {
       console.error('❌ Error detectar transportista:', error.message);
-      return 'correos-es'; // Fallback
+      return 'correos-spain'; // Fallback
     }
   }
 }
