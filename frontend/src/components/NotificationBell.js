@@ -37,7 +37,7 @@ const NotificationBell = () => {
 
       setLoading(true);
 
-      const response = await axios.get(`${API_URL}/notifications/my-notifications`, { // ✅ Fix: ruta correcta
+      const response = await axios.get(`${API_URL}/notifications`, { // ✅ Fix: ruta correcta
         headers: { Authorization: `Bearer ${token}` }
       });
 
