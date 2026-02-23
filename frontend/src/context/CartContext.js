@@ -1,17 +1,13 @@
+// MODIFICACIÓN COMPLETA del CartContext para controlar MiniCart
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 const CartContext = createContext();
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart debe usarse dentro de un CartProvider');
-  }
-  return context;
-};
-
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [miniCartOpen, setMiniCartOpen] = useState(false); // ✅ NUEVO
 
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
@@ -20,66 +16,103 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+  const addToCart = (product) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item._id === product._id);
 
-  const addToCart = (product, quantity = 1) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item._id === product._id);
-      
+      let newCart;
       if (existingItem) {
-        return prevCart.map(item =>
+        newCart = prevCart.map((item) =>
           item._id === product._id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+        
+        toast.success(
+          `${product.name} (${existingItem.quantity + 1})`,
+          { icon: '🛒', duration: 2000 }
+        );
+      } else {
+        newCart = [...prevCart, { ...product, quantity: 1 }];
+        
+        toast.success(
+          `✅ ${product.name} añadido`,
+          {
+            duration: 2000,
+            style: {
+              background: '#067D62',
+              color: '#fff',
+            }
+          }
+        );
       }
+
+      localStorage.setItem('cart', JSON.stringify(newCart));
       
-      return [...prevCart, { ...product, quantity }];
+      // ✅ ABRIR MINI CARRITO AUTOMÁTICAMENTE
+      setMiniCartOpen(true);
+      
+      return newCart;
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item._id !== productId));
+    setCart((prevCart) => {
+      const removedItem = prevCart.find(item => item._id === productId);
+      const newCart = prevCart.filter((item) => item._id !== productId);
+      localStorage.setItem('cart', JSON.stringify(newCart));
+      
+      if (removedItem) {
+        toast.error(`${removedItem.name} eliminado`, { duration: 2000 });
+      }
+      
+      return newCart;
+    });
   };
 
-  const updateQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
+  const updateQuantity = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
     
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item._id === productId ? { ...item, quantity } : item
-      )
-    );
+    setCart((prevCart) => {
+      const newCart = prevCart.map((item) =>
+        item._id === productId ? { ...item, quantity: newQuantity } : item
+      );
+      localStorage.setItem('cart', JSON.stringify(newCart));
+      return newCart;
+    });
   };
 
   const clearCart = () => {
     setCart([]);
-  };
-
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    localStorage.removeItem('cart');
+    toast.success('Carrito vaciado', { icon: '🗑️', duration: 2000 });
   };
 
   const getCartCount = () => {
-    return cart.reduce((count, item) => count + item.quantity, 0);
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   return (
-    <CartContext.Provider value={{
-      cart,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      getCartTotal,
-      getCartCount
-    }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getCartCount,
+        getCartTotal,
+        miniCartOpen,        // ✅ NUEVO
+        setMiniCartOpen      // ✅ NUEVO
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
 };
+
+export const useCart = () => useContext(CartContext);

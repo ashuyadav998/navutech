@@ -36,6 +36,10 @@ const productSchema = new mongoose.Schema({
     ref: 'Category',
     required: true
   },
+  subcategory: {
+    type: String,
+    default: null
+  },
   images: [{
     type: String
   }],
@@ -80,7 +84,18 @@ const productSchema = new mongoose.Schema({
     count: {
       type: Number,
       default: 0
-    }
+    },dishashopSKU: {
+  type: String,
+  default: null
+},
+dishashopURL: {
+  type: String,
+  default: null
+},
+dishashopPrice: {
+  type: Number,
+  default: 0
+}
   }
 }, {
   timestamps: true

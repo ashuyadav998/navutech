@@ -6,7 +6,7 @@ import '../styles/Auth.css';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, user } = useAuth(); // ✅ Añadir user
+  const { login, isAuthenticated, user } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -15,14 +15,13 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Si ya está autenticado, redirigir
+  // ✅ CORREGIDO: Añadir 'user' a las dependencias
   useEffect(() => {
     if (isAuthenticated()) {
-      console.log('✅ Ya autenticado, redirigiendo...'); // ✅ DEBUG
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, user, navigate, location]); // ✅ Añadido 'user'
 
   const handleChange = (e) => {
     setFormData({
@@ -36,39 +35,27 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    console.log('🔵 [LOGIN COMPONENT] Iniciando login...'); // ✅ DEBUG
-
     try {
-      // ✅ USAR LA FUNCIÓN LOGIN DEL AUTHCONTEXT
       const result = await login(formData.email, formData.password);
-      
-      console.log('🔵 [LOGIN COMPONENT] Resultado:', result); // ✅ DEBUG
 
       if (result.success) {
-        console.log('✅ [LOGIN COMPONENT] Login exitoso'); // ✅ DEBUG
-        
-        // Esperar un momento para que el estado se actualice
-        setTimeout(() => {
-          // Redirigir según el rol
-          if (result.user?.role === 'admin') {
-            console.log('🔵 [LOGIN COMPONENT] Redirigiendo a /admin'); // ✅ DEBUG
-            navigate('/admin', { replace: true });
-          } else {
-            const from = location.state?.from?.pathname || '/';
-            console.log('🔵 [LOGIN COMPONENT] Redirigiendo a:', from); // ✅ DEBUG
-            navigate(from, { replace: true });
-          }
-        }, 100);
+        // La redirección la maneja el useEffect automáticamente
+        // No necesitamos setTimeout ni navigate manual aquí
       } else {
         setError(result.message || 'Error al iniciar sesión');
       }
     } catch (err) {
-      console.error('❌ [LOGIN COMPONENT] Error:', err); // ✅ DEBUG
+      console.error('❌ Error:', err);
       setError('Error inesperado al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Si ya está autenticado, no mostrar el formulario
+  if (isAuthenticated()) {
+    return null; // O un spinner de carga
+  }
 
   return (
     <div className="auth-page">
@@ -112,9 +99,8 @@ const Login = () => {
             ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
           </p>
           <div className="forgot-password-link">
-       <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
-  </div>
-          
+            <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+          </div>
         </div>
       </div>
     </div>

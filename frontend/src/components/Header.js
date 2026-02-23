@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  FaShoppingCart, FaUser, FaBars, FaTimes, 
-  FaBoxOpen, FaBell, FaCog, FaSignOutAlt, FaSearch 
+import {
+  FaShoppingCart, FaUser, FaBars, FaTimes,
+  FaBoxOpen, FaBell, FaCog, FaSignOutAlt, FaSearch
 } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,11 +10,14 @@ import NotificationBell from './NotificationBell';
 import { getCategories } from '../services/api';
 import '../styles/Header.css';
 
+
+import MiniCart from './MiniCart';
+
 const Header = () => {
   const navigate = useNavigate();
-  const { getCartCount } = useCart();
+  const { getCartCount, miniCartOpen, setMiniCartOpen } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
-  
+
   // Estados para búsqueda y menús
   const [searchTerm, setSearchTerm] = useState('');
   const [categories, setCategories] = useState([]);
@@ -82,9 +85,9 @@ const Header = () => {
 
           {/* BARRA DE BÚSQUEDA (FORMULARIO ACTIVO) */}
           <form className="search-bar" onSubmit={handleSearch}>
-            <input 
-              type="text" 
-              placeholder="Buscar productos..." 
+            <input
+              type="text"
+              placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -98,9 +101,9 @@ const Header = () => {
             {isAuthenticated() ? (
               <>
                 <NotificationBell />
-                
+
                 <div className="user-dropdown" ref={userMenuRef}>
-                  <button 
+                  <button
                     className="user-button"
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                   >
@@ -151,13 +154,24 @@ const Header = () => {
                 <span>Iniciar Sesión</span>
               </Link>
             )}
-
-            <Link to="/cart" className="cart-link">
+            <button
+              onClick={() => setMiniCartOpen(true)}
+              className="cart-link"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
               <FaShoppingCart />
               {getCartCount() > 0 && (
                 <span className="cart-badge">{getCartCount()}</span>
               )}
-            </Link>
+            </button>
           </div>
 
           {/* BOTÓN MENÚ MÓVIL */}
@@ -175,7 +189,7 @@ const Header = () => {
             <li><Link to="/products" onClick={() => setMenuOpen(false)}>Todos los Productos</Link></li>
             {categories.slice(0, 6).map(category => (
               <li key={category._id}>
-                <Link 
+                <Link
                   to={`/categoria/${category.slug}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -186,6 +200,10 @@ const Header = () => {
           </ul>
         </div>
       </nav>
+       <MiniCart 
+        isOpen={miniCartOpen} 
+        onClose={() => setMiniCartOpen(false)} 
+      />
     </header>
   );
 };

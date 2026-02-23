@@ -11,7 +11,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const stripeKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
-// Validar código postal español
 const validarCodigoPostal = (cp) => {
   const regex = /^(?:0[1-9]|[1-4]\d|5[0-2])\d{3}$/;
   return regex.test(cp);
@@ -88,7 +87,6 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showStripeForm, setShowStripeForm] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     street: '',
@@ -111,58 +109,24 @@ const Checkout = () => {
     }
   }, [isAuthenticated, cart, navigate]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.street.trim()) newErrors.street = 'Dirección obligatoria';
-    if (!formData.city.trim()) newErrors.city = 'Ciudad obligatoria';
-    if (!formData.province) newErrors.province = 'Selecciona provincia';
-    
-    if (!formData.postalCode) {
-      newErrors.postalCode = 'Código postal obligatorio';
-    } else if (!validarCodigoPostal(formData.postalCode)) {
-      newErrors.postalCode = 'Código postal inválido';
-    }
-
-    // Validación de teléfono
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Teléfono obligatorio';
-    } else {
-      const phoneRegex = /^[6-9]\d{8}$/;
-      if (!phoneRegex.test(formData.phone)) {
-        newErrors.phone = 'Teléfono inválido (9 dígitos, ej: 612345678)';
+  // ✅ NUEVO: Crear PaymentIntent automáticamente cuando se elige Stripe y el formulario es válido
+  useEffect(() => {
+    if (paymentMethod === 'stripe' && !clientSecret) {
+      // Validar que los campos principales estén llenos antes de crear PaymentIntent
+      if (formData.street && formData.city && formData.province && formData.postalCode && formData.phone) {
+        if (validateForm()) {
+          createPaymentIntent();
+        }
       }
     }
+  }, [paymentMethod, formData]);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // ✅ FUNCIÓN CORREGIDA - Crear PaymentIntent solo cuando se presiona el botón
-  const handleInitiateStripePayment = async () => {
-    // Validar formulario primero
-    if (!validateForm()) {
-      alert('Por favor, completa todos los campos correctamente antes de continuar');
-      return;
-    }
-
+  const createPaymentIntent = async () => {
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token');
-      
-      console.log('🔄 Creando PaymentIntent con datos:', {
-        items: cart.length,
-        total: getCartTotal(),
-        phone: formData.phone
-      });
+
+      console.log('🔄 Creando PaymentIntent automáticamente');
 
       const response = await axios.post(
         `${API_URL}/stripe/create-payment-intent`,
@@ -192,22 +156,50 @@ const Checkout = () => {
 
       console.log('✅ PaymentIntent creado:', response.data.clientSecret);
       setClientSecret(response.data.clientSecret);
-      setShowStripeForm(true);
     } catch (error) {
       console.error('❌ Error al crear PaymentIntent:', error);
-      const errorMsg = error.response?.data?.error || 
-                       error.response?.data?.message || 
-                       'Error al inicializar pago';
-      alert(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.street.trim()) newErrors.street = 'Dirección obligatoria';
+    if (!formData.city.trim()) newErrors.city = 'Ciudad obligatoria';
+    if (!formData.province) newErrors.province = 'Selecciona provincia';
+    
+    if (!formData.postalCode) {
+      newErrors.postalCode = 'Código postal obligatorio';
+    } else if (!validarCodigoPostal(formData.postalCode)) {
+      newErrors.postalCode = 'Código postal inválido';
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Teléfono obligatorio';
+    } else {
+      const phoneRegex = /^[6-9]\d{8}$/;
+      if (!phoneRegex.test(formData.phone)) {
+        newErrors.phone = 'Teléfono inválido (9 dígitos, ej: 612345678)';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handlePaymentMethodChange = (method) => {
     setPaymentMethod(method);
-    setShowStripeForm(false);
-    setClientSecret('');
+    setClientSecret(''); // Limpiar clientSecret anterior
   };
 
   const handleStripeSuccess = async (paymentIntentId) => {
@@ -442,7 +434,6 @@ const Checkout = () => {
                     className={`payment-method-btn ${paymentMethod === 'stripe' ? 'active' : ''}`}
                     onClick={() => handlePaymentMethodChange('stripe')}
                     type="button"
-                    disabled={showStripeForm}
                   >
                     <span className="payment-icon">💳</span>
                     <span>Tarjeta</span>
@@ -453,7 +444,6 @@ const Checkout = () => {
                   className={`payment-method-btn ${paymentMethod === 'bizum' ? 'active' : ''}`}
                   onClick={() => handlePaymentMethodChange('bizum')}
                   type="button"
-                  disabled={showStripeForm}
                 >
                   <span className="payment-icon">📱</span>
                   <span>Bizum</span>
@@ -463,7 +453,6 @@ const Checkout = () => {
                   className={`payment-method-btn ${paymentMethod === 'transferencia' ? 'active' : ''}`}
                   onClick={() => handlePaymentMethodChange('transferencia')}
                   type="button"
-                  disabled={showStripeForm}
                 >
                   <span className="payment-icon">🏦</span>
                   <span>Transferencia</span>
@@ -473,35 +462,30 @@ const Checkout = () => {
                   className={`payment-method-btn ${paymentMethod === 'contrareembolso' ? 'active' : ''}`}
                   onClick={() => handlePaymentMethodChange('contrareembolso')}
                   type="button"
-                  disabled={showStripeForm}
                 >
                   <span className="payment-icon">💵</span>
                   <span>Contrareembolso (+3€)</span>
                 </button>
               </div>
 
-              {/* Botón para iniciar pago con Stripe */}
-              {paymentMethod === 'stripe' && !showStripeForm && (
-                <div className="payment-init-section">
-                  <p className="payment-info">
-                    ℹ️ Completa tu dirección de envío y haz clic en continuar para procesar el pago
-                  </p>
-                  <button 
-                    className="btn-finalizar-compra"
-                    onClick={handleInitiateStripePayment}
-                    disabled={loading}
-                  >
-                    {loading ? 'Preparando pago...' : '▶️ Continuar con Tarjeta'}
-                  </button>
-                </div>
-              )}
-
-              {/* Formulario Stripe */}
-              {paymentMethod === 'stripe' && showStripeForm && clientSecret && stripePromise && (
-                <div className="stripe-form-container">
-                  <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <StripePaymentForm onSuccess={handleStripeSuccess} />
-                  </Elements>
+              {/* ✅ STRIPE: Mostrar formulario directamente sin botón intermedio */}
+              {paymentMethod === 'stripe' && (
+                <div className="stripe-form-container" style={{ marginTop: '20px' }}>
+                  {loading && (
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      Preparando pago seguro...
+                    </p>
+                  )}
+                  {!clientSecret && !loading && (
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      Completa tu dirección de envío para continuar
+                    </p>
+                  )}
+                  {clientSecret && stripePromise && !loading && (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <StripePaymentForm onSuccess={handleStripeSuccess} />
+                    </Elements>
+                  )}
                 </div>
               )}
 

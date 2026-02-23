@@ -3,6 +3,8 @@ import { FaEye, FaEdit, FaPhone, FaDownload } from 'react-icons/fa';
 import axios from 'axios';
 import '../../styles/AdminOrders.css';
 import { toast } from 'react-toastify';
+import DishashopHelper from '../../components/DishashopHelper';
+import ManualTrackingModal from '../../components/ManualTrackingModal';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +14,7 @@ const AdminOrders = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState({ orderStatus: '', paymentStatus: '' });
   const [error, setError] = useState(null);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
 
   const notifiedOrders = useRef(new Set());
   const isFirstLoad = useRef(true);
@@ -46,7 +49,7 @@ const AdminOrders = () => {
 
   const handleNewOrderNotification = (newOrders) => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
     newOrders.forEach(order => {
       toast.success(
         `🔔 ¡NUEVO PEDIDO! #${order._id.slice(-6).toUpperCase()}\nCliente: ${order.user?.name || 'Desconocido'}\nTotal: ${formatPrice(order.totalAmount)}`,
@@ -120,7 +123,7 @@ const AdminOrders = () => {
     } catch (err) {
       const msg = err.response?.status === 404 ? 'Etiqueta aún no disponible'
         : err.response?.status === 401 ? 'Sesión expirada'
-        : 'Error al descargar la etiqueta';
+          : 'Error al descargar la etiqueta';
       toast.error(msg);
     }
   };
@@ -162,12 +165,12 @@ const AdminOrders = () => {
         statusUpdate,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       toast.success('✅ Estado actualizado y notificación enviada al cliente');
-      
+
       // Recargar la lista
       await loadOrders(false);
-      
+
       // Actualizar selectedOrder con la nueva data
       const response = await axios.get(`${API_URL}/orders`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -316,12 +319,15 @@ const AdminOrders = () => {
                 </div>
               </div>
 
-              {selectedOrder.tracking?.trackingNumber && (
-                <div className="detail-card">
-                  <h4>🚚 Información de Envío</h4>
+              {/* BOTONES DE TRACKING */}
+              <div className="detail-card">
+                <h4>🚚 Información de Envío</h4>
+
+                {selectedOrder.tracking?.trackingNumber ? (
+                  /* SI YA TIENE TRACKING */
                   <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
                     <p><strong>Tracking:</strong> {selectedOrder.tracking.trackingNumber}</p>
-                    <p><strong>Transportista:</strong> {selectedOrder.tracking.carrier || 'Correos Express'}</p>
+                    <p><strong>Transportista:</strong> {selectedOrder.tracking.carrier || 'Correos España'}</p>
                     <p><strong>Estado:</strong> {selectedOrder.tracking.currentStatus || 'en_preparacion'}</p>
                     <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
                       <button className="btn-update-status" onClick={() => downloadLabel(selectedOrder)} style={{ flex: 1 }}>
@@ -332,8 +338,25 @@ const AdminOrders = () => {
                       </button>
                     </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  /* SI NO TIENE TRACKING - MOSTRAR BOTONES */
+                  <div style={{ padding: '15px', background: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107' }}>
+                    <p style={{ marginBottom: '15px', color: '#856404' }}>
+                      ⚠️ Este pedido aún no tiene tracking asignado
+                    </p>
+                    <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+                      <DishashopHelper order={selectedOrder} />
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => setShowTrackingModal(true)}
+                        style={{ width: '100%' }}
+                      >
+                        📦 Añadir Tracking Manual
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="detail-card full-width">
                 <h4>📦 Productos ({selectedOrder.items?.length || 0})</h4>
@@ -357,6 +380,18 @@ const AdminOrders = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL TRACKING MANUAL */}
+{showTrackingModal && selectedOrder && (
+  <ManualTrackingModal
+    order={selectedOrder}
+    onClose={() => setShowTrackingModal(false)}
+    onSuccess={() => {
+      loadOrders(false);
+      setShowTrackingModal(false);
+    }}
+  />
+)}
     </div>
   );
 };

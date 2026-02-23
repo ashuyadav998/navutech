@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -8,9 +8,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth(); // ✅ Añadir isAuthenticated y user
   
-  const [step, setStep] = useState(1); // 1: formulario, 2: verificación, 3: éxito
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,6 +22,13 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // ✅ NUEVO: Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -29,7 +36,6 @@ const Register = () => {
     });
   };
 
-  // Paso 1: Enviar código
   const handleSendCode = async (e) => {
     e.preventDefault();
     setError('');
@@ -62,7 +68,6 @@ const Register = () => {
     }
   };
 
-  // Paso 2: Verificar código y registrar
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     setError('');
@@ -76,13 +81,12 @@ const Register = () => {
         password: formData.password
       });
 
-      // ✅ CAMBIO: Mostrar paso de éxito primero
       setStep(3);
       
-      // ✅ Guardar sesión
-      login(response.data.user, response.data.token);
+      // Guardar sesión
+      sessionStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      // ✅ Redirigir después de 3 segundos
       setTimeout(() => {
         navigate('/');
       }, 3000);
@@ -113,6 +117,11 @@ const Register = () => {
     }
   };
 
+  // ✅ Si ya está autenticado, no mostrar nada
+  if (isAuthenticated()) {
+    return null;
+  }
+
   return (
     <div className="auth-page">
       <div className="container">
@@ -120,7 +129,6 @@ const Register = () => {
           <h1>Crear Cuenta</h1>
 
           {step === 1 && (
-            /* PASO 1: Formulario de registro */
             <>
               {error && <div className="error-message">{error}</div>}
               {message && <div className="success-message">{message}</div>}
@@ -183,7 +191,6 @@ const Register = () => {
           )}
 
           {step === 2 && (
-            /* PASO 2: Verificación de código */
             <>
               <div className="verification-step">
                 <div className="verification-icon">📧</div>
@@ -238,7 +245,6 @@ const Register = () => {
           )}
 
           {step === 3 && (
-            /* PASO 3: Éxito - ✅ NUEVO */
             <div className="success-container">
               <div className="success-icon">🎉</div>
               <h2>¡Cuenta creada con éxito!</h2>
