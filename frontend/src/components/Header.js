@@ -1,36 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  FaShoppingCart, FaUser, FaBars, FaTimes,
-  FaBoxOpen, FaBell, FaCog, FaSignOutAlt, FaSearch
+import { 
+  FaShoppingCart, FaUser, FaBars, FaTimes, 
+  FaBoxOpen, FaBell, FaCog, FaSignOutAlt, FaSearch 
 } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import MiniCart from './MiniCart';
 import { getCategories } from '../services/api';
 import '../styles/Header.css';
-
-
-import MiniCart from './MiniCart';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header = () => {
   const navigate = useNavigate();
   const { getCartCount, miniCartOpen, setMiniCartOpen } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
-
-  // Estados para búsqueda y menús
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [categories, setCategories] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
 
-  // Cargar categorías al iniciar
   useEffect(() => {
     loadCategories();
   }, []);
 
-  // Cerrar el menú de usuario al hacer clic fuera de él
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -50,11 +46,9 @@ const Header = () => {
     }
   };
 
-  // Lógica de búsqueda funcional
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // Redirige a la página de productos con el parámetro search
       navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
       setSearchTerm('');
       setMenuOpen(false);
@@ -78,16 +72,14 @@ const Header = () => {
     <header className="header">
       <div className="header-top">
         <div className="container">
-          {/* LOGO */}
           <Link to="/" className="logo">
             <h1>SimShop</h1>
           </Link>
 
-          {/* BARRA DE BÚSQUEDA (FORMULARIO ACTIVO) */}
           <form className="search-bar" onSubmit={handleSearch}>
-            <input
-              type="text"
-              placeholder="Buscar productos..."
+            <input 
+              type="text" 
+              placeholder="Buscar productos..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -96,14 +88,13 @@ const Header = () => {
             </button>
           </form>
 
-          {/* ACCIONES (NOTIFICACIONES, USUARIO, CARRITO) */}
           <div className="header-actions">
             {isAuthenticated() ? (
               <>
                 <NotificationBell />
-
+                
                 <div className="user-dropdown" ref={userMenuRef}>
-                  <button
+                  <button 
                     className="user-button"
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                   >
@@ -154,18 +145,12 @@ const Header = () => {
                 <span>Iniciar Sesión</span>
               </Link>
             )}
-            <button
+
+              
+
+            <button 
               onClick={() => setMiniCartOpen(true)}
               className="cart-link"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
             >
               <FaShoppingCart />
               {getCartCount() > 0 && (
@@ -174,14 +159,12 @@ const Header = () => {
             </button>
           </div>
 
-          {/* BOTÓN MENÚ MÓVIL */}
           <button className="mobile-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
       </div>
 
-      {/* NAVEGACIÓN DE CATEGORÍAS */}
       <nav className={`main-nav ${menuOpen ? 'open' : ''}`}>
         <div className="container">
           <ul>
@@ -189,7 +172,7 @@ const Header = () => {
             <li><Link to="/products" onClick={() => setMenuOpen(false)}>Todos los Productos</Link></li>
             {categories.slice(0, 6).map(category => (
               <li key={category._id}>
-                <Link
+                <Link 
                   to={`/categoria/${category.slug}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -200,7 +183,8 @@ const Header = () => {
           </ul>
         </div>
       </nav>
-       <MiniCart 
+
+      <MiniCart 
         isOpen={miniCartOpen} 
         onClose={() => setMiniCartOpen(false)} 
       />

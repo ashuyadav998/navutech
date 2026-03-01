@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { getProducts, getCategories } from '../services/api';
 import '../styles/Home.css';
+import SEO from '../components/SEO';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -39,14 +40,21 @@ const Home = () => {
   }
 
   return (
+    
     <div className="home">
+
+      <SEO 
+  title="SimShop - Tienda Online de Electrónica y Tecnología"
+  description="Encuentra los mejores productos electrónicos al mejor precio. iPhone, Samsung, laptops, accesorios y más. Envío gratis en pedidos superiores a 50€."
+  keywords="tienda online, electrónica, móviles, iPhone, Samsung, laptops, accesorios, tecnología, comprar online España"
+  url="https://navutech.netlify.app"
+/>
       {/* Hero Section */}
       <section className="hero">
         <div className="container">
           <div className="hero-content">
             <h1>Bienvenido a SimShop</h1>
-            <p>Las mejores ofertas en tarjetas SIM y productos electrónicos</p>
-            <Link to="/productos" className="cta-button">Ver Todos los Productos</Link>
+<h1>Tienda Online de Electrónica y Tecnología - Los Mejores Precios</h1>            <Link to="/productos" className="cta-button">Ver Todos los Productos</Link>
           </div>
         </div>
       </section>
@@ -106,6 +114,30 @@ const Home = () => {
           </div>
         </section>
       )}
+      <section style={{ padding: '40px 20px', background: 'var(--bg-white)' }}>
+  <div className="container">
+    <h2>¿Por qué comprar en SimShop?</h2>
+    <p style={{ lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: '20px' }}>
+      SimShop es tu tienda online de confianza para comprar productos electrónicos y tecnología 
+      en España. Ofrecemos una amplia selección de móviles, laptops, tablets, accesorios y más, 
+      con los mejores precios del mercado y envío gratis en pedidos superiores a 50€.
+    </p>
+    
+    <h3>Nuestros productos más populares</h3>
+    <p style={{ lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: '20px' }}>
+      Encuentra las últimas novedades en smartphones como iPhone 15, Samsung Galaxy S24, 
+      laptops de las mejores marcas, auriculares inalámbricos, cargadores rápidos y mucho más. 
+      Todos nuestros productos cuentan con garantía oficial y atención al cliente personalizada.
+    </p>
+
+    <h3>Compra segura y envío rápido</h3>
+    <p style={{ lineHeight: 1.8, color: 'var(--text-secondary)' }}>
+      Realizamos envíos a toda España con seguimiento incluido. Pago 100% seguro con tarjeta, 
+      Bizum, transferencia o contrareembolso. Devoluciones fáciles en 30 días. 
+      Soporte al cliente disponible para resolver todas tus dudas.
+    </p>
+  </div>
+</section>
     </div>
   );
 };

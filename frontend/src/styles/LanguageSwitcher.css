@@ -1,0 +1,54 @@
+/* src/styles/LanguageSwitcher.css */
+
+.language-switcher {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.lang-btn.active {
+  background: var(--primary);
+  color: #0F1111;
+}
+
+.lang-btn .flag {
+  font-size: 16px;
+}
+
+.lang-btn .code {
+  font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lang-btn .code {
+    display: none;
+  }
+  
+  .lang-btn {
+    padding: 6px 8px;
+  }
+}

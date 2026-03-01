@@ -1,9 +1,65 @@
 [build]
   base = "frontend"
-  command = "npm install && CI=false npm run build"
+  command = "npm ci && npm run build"
   publish = "build"
 
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Force HTTPS
+[[redirects]]
+  from = "http://navutech.netlify.app/*"
+  to = "https://navutech.netlify.app/:splat"
+  status = 301
+  force = true
+
+# Redirect www to non-www
+[[redirects]]
+  from = "https://www.navutech.netlify.app/*"
+  to = "https://navutech.netlify.app/:splat"
+  status = 301
+  force = true
+
+# SPA redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Headers for security and compression
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# Enable compression
+[[headers]]
+  for = "*.html"
+  [headers.values]
+    Content-Encoding = "gzip"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
