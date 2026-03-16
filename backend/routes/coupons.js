@@ -1,7 +1,7 @@
 // routes/coupons.js
 const express = require('express');
 const router  = express.Router();
-const Coupon  = require('../models/Coupon');
+const Coupon  = require('../models/Coupons');
 const { auth, isAdmin } = require('./auth');
 
 /* ─────────────────────────────────────────
