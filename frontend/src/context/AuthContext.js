@@ -83,7 +83,9 @@ export const AuthProvider = ({ children }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
-    return await res.json();
+    const data = await res.json();
+    if (!res.ok) throw { response: { data } };
+    return data;
   };
 
   const resetPassword = async (email, code, newPassword) => {
@@ -92,7 +94,9 @@ export const AuthProvider = ({ children }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code, newPassword }),
     });
-    return await res.json();
+    const data = await res.json();
+    if (!res.ok) throw { response: { data } };
+    return data;
   };
 
   

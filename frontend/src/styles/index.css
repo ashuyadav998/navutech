@@ -7,6 +7,29 @@
 
 /* ── Variables ── */
 :root {
+  /* ── Admin Dark Theme ── */
+  --az-black:       #0D1117;
+  --az-dark:        #161B22;
+  --az-card:        #1C2330;
+  --az-surface:     #21262D;
+  --az-border:      rgba(255,255,255,0.08);
+
+  /* ── Admin Text ── */
+  --az-text:        #E6EDF3;
+  --az-text-muted:  #8B949E;
+  --az-text-subtle: #484F58;
+
+  /* ── Admin Accent Colors ── */
+  --az-cyan:        #00C8FF;
+  --az-cyan-dim:    rgba(0,200,255,0.08);
+  --az-cyan-glow:   rgba(0,200,255,0.3);
+  --az-violet:      #7B5CF0;
+  --az-success:     #10D07A;
+  --az-warning:     #FFB830;
+  --az-error:       #FF4D6A;
+
+  /* ── Admin Animations ── */
+  --ease-med:       0.3s cubic-bezier(0.0,0,0.2,1);
   --chalk:      #F5F2EC;
   --chalk-2:    #EDE9E0;
   --chalk-3:    #E0DBD0;
@@ -100,3 +123,11 @@ img { max-width:100%; display:block; }
 
 .loading { text-align:center; padding:60px; color:var(--ink-ghost); font-size:0.9rem; }
 .error   { text-align:center; padding:60px; color:var(--orange); font-size:0.9rem; }
+
+@keyframes az-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes az-spin {
+  to { transform: rotate(360deg); }
+}
