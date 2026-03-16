@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { auth, isAdmin } = require('./auth');
 
 // Obtener todos los productos con filtros
 router.get('/', async (req, res) => {
@@ -54,7 +55,7 @@ router.get('/:identifier', async (req, res) => {
 });
 
 // Crear producto (requiere admin)
-router.post('/', async (req, res) => {
+router.post('/', auth, isAdmin, async (req, res) => {
   try {
     const product = new Product(req.body);
     await product.save();
@@ -65,7 +66,7 @@ router.post('/', async (req, res) => {
 });
 
 // Actualizar producto (requiere admin)
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, isAdmin, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
       req.params.id,
@@ -84,7 +85,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Eliminar producto (requiere admin)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, isAdmin, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
 
