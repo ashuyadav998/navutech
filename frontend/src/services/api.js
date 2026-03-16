@@ -44,4 +44,15 @@ export const getUserOrders = (userId) => api.get(`/orders/user/${userId}`);
 export const getOrder = (id) => api.get(`/orders/${id}`);
 export const updateOrderStatus = (id, data) => api.put(`/orders/${id}/status`, data);
 
+// ── Añade estas líneas al final de src/services/api.js ──
+
+// Cupones
+export const validateCoupon = (code, cartTotal) =>
+  api.post('/coupons/validate', { code, cartTotal });
+
+export const getCoupons     = ()       => api.get('/coupons');
+export const createCoupon   = (data)   => api.post('/coupons', data);
+export const updateCoupon   = (id, data) => api.put(`/coupons/${id}`, data);
+export const deleteCoupon   = (id)     => api.delete(`/coupons/${id}`);
+
 export default api;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  FaShoppingCart, FaUser, FaBars, FaTimes, 
-  FaBoxOpen, FaBell, FaCog, FaSignOutAlt, FaSearch 
+import {
+  FaShoppingCart, FaUser, FaBars, FaTimes,
+  FaBoxOpen, FaBell, FaCog, FaSignOutAlt, FaSearch
 } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -16,20 +16,18 @@ const Header = () => {
   const navigate = useNavigate();
   const { getCartCount, miniCartOpen, setMiniCartOpen } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [searchTerm,   setSearchTerm]   = useState('');
+  const [categories,   setCategories]   = useState([]);
+  const [menuOpen,     setMenuOpen]      = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  useEffect(() => { loadCategories(); }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenuOpen(false);
       }
     };
@@ -72,31 +70,41 @@ const Header = () => {
     <header className="header">
       <div className="header-top">
         <div className="container">
+
+          {/* ── Logo ── */}
           <Link to="/" className="logo">
-            <h1>SimShop</h1>
+            <h1>AsZuTech</h1>
           </Link>
 
+          {/* ── Buscador ── */}
           <form className="search-bar" onSubmit={handleSearch}>
-            <input 
-              type="text" 
-              placeholder="Buscar productos..." 
+            <input
+              type="text"
+              placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar productos"
             />
             <button type="submit" aria-label="Buscar">
               <FaSearch />
             </button>
           </form>
 
+          {/* ── Acciones ── */}
           <div className="header-actions">
+
+           
+
             {isAuthenticated() ? (
               <>
                 <NotificationBell />
-                
+
                 <div className="user-dropdown" ref={userMenuRef}>
-                  <button 
+                  <button
                     className="user-button"
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    aria-expanded={userMenuOpen}
+                    aria-label="Menú de usuario"
                   >
                     <FaUser />
                     <span className="user-name-text">{user?.name}</span>
@@ -124,12 +132,15 @@ const Header = () => {
                         </button>
 
                         {user?.role === 'admin' && (
-                          <button onClick={() => handleMenuItemClick('/admin')} className="admin-link">
+                          <button
+                            onClick={() => handleMenuItemClick('/admin')}
+                            className="admin-link"
+                          >
                             🎛️ Panel Admin
                           </button>
                         )}
 
-                        <div className="dropdown-divider"></div>
+                        <div className="dropdown-divider" />
 
                         <button onClick={handleLogout} className="logout-btn-dropdown">
                           <FaSignOutAlt /> <span>Cerrar Sesión</span>
@@ -146,11 +157,11 @@ const Header = () => {
               </Link>
             )}
 
-              
-
-            <button 
+            {/* ── Carrito ── */}
+            <button
               onClick={() => setMiniCartOpen(true)}
               className="cart-link"
+              aria-label="Abrir carrito"
             >
               <FaShoppingCart />
               {getCartCount() > 0 && (
@@ -159,20 +170,26 @@ const Header = () => {
             </button>
           </div>
 
-          <button className="mobile-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
+          {/* ── Hamburger mobile ── */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          >
             {menuOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
       </div>
 
-      <nav className={`main-nav ${menuOpen ? 'open' : ''}`}>
+      {/* ── Nav secundaria ── */}
+      <nav className={`main-nav ${menuOpen ? 'open' : ''}`} aria-label="Navegación principal">
         <div className="container">
           <ul>
-            <li><Link to="/" onClick={() => setMenuOpen(false)}>Inicio</Link></li>
+            <li><Link to="/"        onClick={() => setMenuOpen(false)}>Inicio</Link></li>
             <li><Link to="/products" onClick={() => setMenuOpen(false)}>Todos los Productos</Link></li>
             {categories.slice(0, 6).map(category => (
               <li key={category._id}>
-                <Link 
+                <Link
                   to={`/categoria/${category.slug}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -184,9 +201,9 @@ const Header = () => {
         </div>
       </nav>
 
-      <MiniCart 
-        isOpen={miniCartOpen} 
-        onClose={() => setMiniCartOpen(false)} 
+      <MiniCart
+        isOpen={miniCartOpen}
+        onClose={() => setMiniCartOpen(false)}
       />
     </header>
   );

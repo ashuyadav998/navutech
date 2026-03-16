@@ -1,124 +1,185 @@
+/* ============================================================
+   AszuTech — Products.css
+   ============================================================ */
+
 .products-page {
   min-height: 80vh;
+  padding: 48px 0 80px;
+  animation: az-fade-in 0.4s ease;
 }
 
+/* ── Page Header ── */
 .page-header {
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .page-header h1 {
-  font-size: 2.5rem;
-  color: #2c3e50;
-  margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--az-text);
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
 }
 
 .page-header p {
-  color: #7f8c8d;
-  font-size: 1.1rem;
+  color: var(--az-text-muted);
+  font-size: 0.95rem;
 }
 
+/* ── Layout ── */
 .products-layout {
   display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 30px;
+  grid-template-columns: 256px 1fr;
+  gap: 28px;
+  align-items: start;
 }
 
+/* ── Filters Sidebar ── */
 .filters-sidebar {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--az-card);
+  border: 1px solid var(--az-border);
+  padding: 24px;
+  border-radius: var(--radius-lg);
   height: fit-content;
   position: sticky;
-  top: 100px;
+  top: 90px;
 }
 
 .filter-group {
-  margin-bottom: 25px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #ecf0f1;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--az-border);
 }
 
 .filter-group:last-child {
   border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .filter-group h3 {
-  font-size: 1.1rem;
-  margin-bottom: 15px;
-  color: #2c3e50;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--az-text-muted);
+  margin-bottom: 14px;
 }
 
+/* ── Category List ── */
 .category-list {
   list-style: none;
 }
 
 .category-list li {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .category-list button {
   background: none;
-  color: #7f8c8d;
+  color: var(--az-text-muted);
   padding: 8px 12px;
   text-align: left;
   width: 100%;
-  border-radius: 4px;
-  transition: background-color 0.3s, color 0.3s;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all var(--ease-fast);
 }
 
 .category-list button:hover {
-  background-color: #ecf0f1;
-  color: #2c3e50;
+  background: var(--az-surface);
+  color: var(--az-text);
 }
 
 .category-list button.active {
-  background-color: #3498db;
-  color: white;
+  background: var(--az-cyan-dim);
+  color: var(--az-cyan);
+  border: 1px solid rgba(0,200,255,0.2);
   font-weight: 600;
 }
 
+/* ── Checkbox ── */
 .checkbox-label {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  color: var(--az-text-muted);
+  font-size: 0.85rem;
+  padding: 6px 0;
+  transition: color var(--ease-fast);
 }
 
-.checkbox-label input {
+.checkbox-label:hover {
+  color: var(--az-text);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--az-cyan);
   cursor: pointer;
 }
 
+/* ── Select ── */
 .filter-group select {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
+  padding: 10px 14px;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-md);
+  color: var(--az-text);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  appearance: none;
+  cursor: pointer;
+  transition: border-color var(--ease-fast);
 }
 
+.filter-group select:focus {
+  outline: none;
+  border-color: rgba(0,200,255,0.35);
+}
+
+.filter-group select option {
+  background: var(--az-dark);
+}
+
+/* ── Products Content ── */
 .products-content {
   min-height: 400px;
 }
 
 .products-info {
   margin-bottom: 20px;
-  color: #7f8c8d;
+  color: var(--az-text-muted);
+  font-size: 0.85rem;
 }
 
+.products-info strong {
+  color: var(--az-text);
+}
+
+/* ── No Products ── */
 .no-products {
   text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 8px;
+  padding: 80px 20px;
+  background: var(--az-card);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-lg);
 }
 
 .no-products p {
-  font-size: 1.2rem;
-  color: #7f8c8d;
+  font-size: 1rem;
+  color: var(--az-text-muted);
+  font-family: var(--font-display);
 }
 
-@media (max-width: 768px) {
+/* ── Responsive ── */
+@media (max-width: 860px) {
   .products-layout {
     grid-template-columns: 1fr;
   }

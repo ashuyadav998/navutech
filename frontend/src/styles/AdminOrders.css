@@ -1,261 +1,466 @@
-/* ==========================================================================
-   GESTIÓN DE PEDIDOS - ADMIN
-   ========================================================================== */
+/* ============================================================
+   AszuTech — Admin Pages CSS
+   AdminOrders · AdminProducts · AdminUsers · AdminCategories · AdminChat
+   ============================================================ */
 
-.admin-orders {
-  max-width: 100%;
-  padding: 20px;
-}
-
-.page-header {
+/* ── Shared Admin Page Header ── */
+.admin-page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.orders-stats {
+.admin-page-header h1 {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--az-text);
+  letter-spacing: -0.04em;
+}
+
+/* ── Search & Filter Bar ── */
+.admin-filter-bar {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
-.stat-item {
-  color: #7f8c8d;
+.admin-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-md);
+  color: var(--az-text);
+  font-size: 0.88rem;
+  transition: border-color var(--ease-fast);
+}
+
+.admin-search-input::placeholder { color: var(--az-text-subtle); }
+.admin-search-input:focus {
+  outline: none;
+  border-color: rgba(0,200,255,0.35);
+  background: var(--az-card);
+}
+
+.admin-select {
+  padding: 9px 14px;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-md);
+  color: var(--az-text-muted);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  appearance: none;
+  cursor: pointer;
+  min-width: 140px;
+  transition: border-color var(--ease-fast);
+}
+
+.admin-select:focus { outline: none; border-color: rgba(0,200,255,0.3); }
+.admin-select option { background: var(--az-dark); }
+
+/* ── Data Table Panel ── */
+.admin-panel {
+  background: var(--az-card);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.admin-panel-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--az-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-panel-header h3 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--az-text);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   ADMIN ORDERS
+   ============================================================ */
+
+.admin-orders {}
+
+.order-status-select {
+  padding: 5px 10px;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-sm);
+  color: var(--az-text);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color var(--ease-fast);
+}
+
+.order-status-select:focus {
+  outline: none;
+  border-color: rgba(0,200,255,0.3);
+}
+
+.order-status-select option { background: var(--az-dark); }
+
+/* ============================================================
+   ADMIN PRODUCTS
+   ============================================================ */
+
+.admin-products {}
+
+/* Product Form Modal */
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.product-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-form label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--az-text-muted);
+}
+
+.product-form input,
+.product-form select,
+.product-form textarea {
+  padding: 10px 14px;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-md);
+  color: var(--az-text);
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  transition: all var(--ease-fast);
+}
+
+.product-form input:focus,
+.product-form select:focus,
+.product-form textarea:focus {
+  outline: none;
+  border-color: rgba(0,200,255,0.35);
+  background: var(--az-card);
+}
+
+.product-form textarea { resize: vertical; min-height: 90px; }
+
+/* Product image preview */
+.product-img-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+}
+
+/* ============================================================
+   ADMIN USERS
+   ============================================================ */
+
+.admin-users {}
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.user-role-badge.admin {
+  background: rgba(123,92,240,0.12);
+  color: var(--az-violet);
+  border: 1px solid rgba(123,92,240,0.2);
+}
+
+.user-role-badge.user {
+  background: var(--az-surface);
+  color: var(--az-text-muted);
+  border: 1px solid var(--az-border);
+}
+
+/* ============================================================
+   ADMIN CATEGORIES
+   ============================================================ */
+
+.admin-categories {}
+
+.category-grid-admin {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.category-card-admin {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all var(--ease-fast);
+}
+
+.category-card-admin:hover {
+  border-color: rgba(0,200,255,0.2);
+}
+
+.category-card-admin-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--az-text);
+}
+
+.category-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ============================================================
+   ADMIN CHAT
+   ============================================================ */
+
+.admin-chat-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 0;
+  background: var(--az-card);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  height: calc(100vh - 140px);
+  min-height: 500px;
+}
+
+.chat-sidebar {
+  border-right: 1px solid var(--az-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--az-surface);
+}
+
+.chat-sidebar-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--az-border);
+}
+
+.chat-sidebar-header h3 {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--az-text);
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-list-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--az-border);
+  cursor: pointer;
+  transition: all var(--ease-fast);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.chat-list-item:hover {
+  background: var(--az-card);
+}
+
+.chat-list-item.active {
+  background: var(--az-cyan-dim);
+  border-left: 2px solid var(--az-cyan);
+}
+
+.chat-user-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--az-text);
+}
+
+.chat-preview {
+  font-size: 0.78rem;
+  color: var(--az-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--az-cyan);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px var(--az-cyan-glow);
+}
+
+/* Chat Window */
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  background: var(--az-dark);
+}
+
+.chat-window-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--az-border);
+  background: var(--az-card);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-window-header h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--az-text);
   font-size: 0.95rem;
 }
 
-.stat-item strong {
-  color: #2c3e50;
-  font-size: 1.1rem;
-  margin-left: 5px;
-}
-
-/* --- TABLA DE PEDIDOS --- */
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.admin-table th, 
-.admin-table td {
-  padding: 15px;
-  text-align: left;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.row-urgent {
-  background-color: #fff5f5; /* Resalta pedidos que necesitan impresión */
-  border-left: 4px solid #e53e3e;
-}
-
-.customer-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.customer-cell strong {
-  color: #2c3e50;
-}
-
-.customer-cell small {
-  color: #7f8c8d;
-  font-size: 0.85rem;
-}
-
-/* --- BADGES DE ESTADO --- */
-.badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.badge-warning { background: #fef3c7; color: #92400e; }
-.badge-info { background: #e0f2fe; color: #075985; }
-.badge-primary { background: #e0e7ff; color: #3730a3; }
-.badge-success { background: #dcfce7; color: #166534; }
-.badge-danger { background: #fee2e2; color: #991b1b; }
-
-/* ==========================================================================
-   MODAL DE DETALLE (CORREGIDO PARA ESPACIO)
-   ========================================================================== */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content.large {
-  background: white;
-  padding: 0; /* Quitamos padding aquí para manejarlo en el contenedor interno */
-  border-radius: 12px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
+.chat-messages {
+  flex: 1;
   overflow-y: auto;
-  position: relative;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-header {
-  padding: 20px 25px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  background: white;
-  z-index: 10;
-}
-
-/* --- GRID DE CONTENIDO (EVITA EL AMONTONAMIENTO) --- */
-.order-detail-container {
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-.detail-grid-top {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Dos columnas: Envío y Estado */
-  gap: 20px;
-}
-
-.detail-card {
-  background-color: #f8f9fa;
   padding: 20px;
-  border-radius: 10px;
-  border: 1px solid #eef2f7;
-}
-
-.detail-card.full-width {
-  grid-column: span 2;
-}
-
-.detail-card h4 {
-  font-size: 0.9rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #dee2e6;
-  padding-bottom: 8px;
-}
-
-/* --- SECCIÓN PRODUCTOS --- */
-.order-items-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
-.item-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.item-main {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.item-qty {
-  font-weight: bold;
-  color: #3498db;
-  background: #ebf8ff;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.item-subtotal {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.order-total-display {
-  text-align: right;
-  padding-top: 20px;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #27ae60;
-}
-
-/* --- FORMULARIO DE ESTADO --- */
-.status-update-form {
+.chat-message {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  max-width: 72%;
 }
 
-.status-update-form select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  background: white;
+.chat-message.admin { align-self: flex-end; }
+.chat-message.user  { align-self: flex-start; }
+
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
-.btn-update-status {
-  width: 100%;
-  background: #3498db;
-  color: white;
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+.chat-message.admin .message-bubble {
+  background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(0,144,184,0.2));
+  border: 1px solid rgba(0,200,255,0.2);
+  color: var(--az-text);
+  border-bottom-right-radius: 4px;
 }
 
-.btn-update-status:hover {
-  background: #2980b9;
+.chat-message.user .message-bubble {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  color: var(--az-text);
+  border-bottom-left-radius: 4px;
 }
 
-/* --- RESPONSIVO --- */
-@media (max-width: 768px) {
-  .detail-grid-top {
+.message-time {
+  font-size: 0.7rem;
+  color: var(--az-text-subtle);
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+.chat-input-area {
+  padding: 16px 20px;
+  border-top: 1px solid var(--az-border);
+  display: flex;
+  gap: 12px;
+  background: var(--az-card);
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 10px 16px;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: var(--radius-xl);
+  color: var(--az-text);
+  font-size: 0.88rem;
+  transition: border-color var(--ease-fast);
+}
+
+.chat-input-area input::placeholder { color: var(--az-text-subtle); }
+.chat-input-area input:focus {
+  outline: none;
+  border-color: rgba(0,200,255,0.3);
+}
+
+.chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--az-cyan), #0090b8);
+  color: var(--az-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: all var(--ease-fast);
+}
+
+.chat-send-btn:hover {
+  box-shadow: 0 4px 14px rgba(0,200,255,0.4);
+  transform: scale(1.08);
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .admin-chat-layout {
     grid-template-columns: 1fr;
-  }
-  
-  .detail-card.full-width {
-    grid-column: span 1;
+    height: auto;
   }
 
-  .modal-content.large {
-    width: 95%;
-    max-height: 95vh;
+  .chat-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--az-border);
+    max-height: 240px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+  .product-form .form-row {
+    grid-template-columns: 1fr;
   }
 }

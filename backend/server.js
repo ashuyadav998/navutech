@@ -39,6 +39,9 @@ app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const couponRoutes = require('./routes/coupons');
+app.use('/api/coupons', couponRoutes);
+
 // Rutas
 const { router: authRouter } = require('./routes/auth');
 app.use('/api/auth', authRouter);
@@ -51,6 +54,7 @@ app.use('/api/stripe',        require('./routes/stripe'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/chat',          require('./routes/chat'));
 app.use('/api/tracking',      require('./routes/tracking'));
+app.use('/sitemap.xml', require('./routes/sitemap'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'API SimShop OK' });

@@ -1,0 +1,29 @@
+# robots.txt — AszuTech
+# https://aszutech.es
+
+User-agent: *
+
+# Permitir todo el contenido público
+Allow: /
+Allow: /products
+Allow: /product/
+Allow: /categoria/
+
+# Bloquear rutas privadas y de admin
+Disallow: /admin/
+Disallow: /perfil/
+Disallow: /orders
+Disallow: /notifications
+Disallow: /security
+Disallow: /checkout
+Disallow: /cart
+Disallow: /api/
+
+# Bloquear parámetros de búsqueda que generan duplicados
+Disallow: /*?search=
+Disallow: /*?sort=
+Disallow: /*?minPrice=
+Disallow: /*?maxPrice=
+
+# Sitemap
+Sitemap: https://aszutech.es/sitemap.xml

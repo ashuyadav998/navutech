@@ -6,40 +6,25 @@ import '../styles/Auth.css';
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { sendPasswordResetCode, resetPassword } = useAuth();
-  
-  // Estados
-  const [step, setStep] = useState(1); // 1 = solicitar código, 2 = resetear contraseña
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
-  // ✅ PASO 1: Solicitar código
+  const [step,            setStep]            = useState(1);
+  const [email,           setEmail]           = useState('');
+  const [code,            setCode]            = useState('');
+  const [newPassword,     setNewPassword]     = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState('');
+  const [success,         setSuccess]         = useState('');
+
   const handleRequestCode = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    
-    if (!email.trim()) {
-      setError('Por favor ingresa tu email');
-      return;
-    }
-
+    setError(''); setSuccess('');
+    if (!email.trim()) { setError('Por favor ingresa tu email'); return; }
     setLoading(true);
-
     try {
       await sendPasswordResetCode(email);
-      setSuccess('Código enviado a tu email. Revisa tu bandeja de entrada.');
-      
-      // ✅ PASAR AUTOMÁTICAMENTE AL PASO 2 después de 2 segundos
-      setTimeout(() => {
-        setStep(2);
-        setSuccess('');
-      }, 2000);
-      
+      setSuccess('Código enviado. Revisa tu bandeja de entrada.');
+      setTimeout(() => { setStep(2); setSuccess(''); }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al enviar código');
     } finally {
@@ -47,216 +32,147 @@ const ForgotPassword = () => {
     }
   };
 
-  // ✅ PASO 2: Resetear contraseña
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    // Validaciones
-    if (!code.trim()) {
-      setError('Por favor ingresa el código de verificación');
-      return;
-    }
-
-    if (!newPassword) {
-      setError('Por favor ingresa una nueva contraseña');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-
+    setError(''); setSuccess('');
+    if (!code.trim())          { setError('Introduce el código de verificación'); return; }
+    if (!newPassword)          { setError('Introduce una nueva contraseña'); return; }
+    if (newPassword.length < 6){ setError('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (newPassword !== confirmPassword) { setError('Las contraseñas no coinciden'); return; }
     setLoading(true);
-
     try {
       await resetPassword(email, code, newPassword);
       setSuccess('¡Contraseña actualizada correctamente!');
-      
-      // Redirigir al login después de 2 segundos
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-      
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al resetear contraseña');
+      setError(err.response?.data?.message || 'Error al actualizar contraseña');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-page">
+      {/* ✅ auth-page centra directamente, sin div.container */}
       <div className="auth-card">
-        <div className="auth-header">
-          <h2>🔒 Recuperar Contraseña</h2>
-          <p>
-            {step === 1 
-              ? 'Ingresa tu email para recibir un código de verificación' 
-              : 'Ingresa el código que recibiste y tu nueva contraseña'}
-          </p>
+
+        <h1>Recuperar Contraseña</h1>
+        <p className="auth-subtitle">
+          {step === 1
+            ? 'Te enviaremos un código a tu email'
+            : 'Introduce el código y tu nueva contraseña'}
+        </p>
+
+        {/* ── Indicador de pasos ── */}
+        <div className="steps-indicator">
+          <div className={`step-dot ${step >= 1 ? 'active' : ''}`}>1</div>
+          <div className="step-line" />
+          <div className={`step-dot ${step >= 2 ? 'active' : ''}`}>2</div>
         </div>
 
-        {/* INDICADOR DE PASOS */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          gap: '10px', 
-          marginBottom: '20px' 
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: step >= 1 ? '#667eea' : '#e0e0e0',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold'
-          }}>
-            1
-          </div>
-          <div style={{
-            width: '40px',
-            height: '2px',
-            background: '#e0e0e0',
-            alignSelf: 'center'
-          }} />
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: step >= 2 ? '#667eea' : '#e0e0e0',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold'
-          }}>
-            2
-          </div>
-        </div>
+        {error   && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
 
-        {error && (
-          <div className="alert alert-error">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="alert alert-success">
-            ✅ {success}
-          </div>
-        )}
-
-        {/* ✅ PASO 1: SOLICITAR CÓDIGO */}
+        {/* ── Paso 1: solicitar código ── */}
         {step === 1 && (
-          <form onSubmit={handleRequestCode} className="auth-form">
+          <form onSubmit={handleRequestCode}>
             <div className="form-group">
-              <label>📧 Email</label>
+              <label htmlFor="fp-email">Email</label>
               <input
                 type="email"
+                id="fp-email"
+                placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
                 disabled={loading}
                 required
               />
             </div>
 
-            <button type="submit" className="auth-button" disabled={loading}>
+            <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? 'Enviando...' : 'Enviar Código'}
             </button>
 
-            <div className="auth-footer">
-              <button 
+            <p className="auth-link">
+              <button
                 type="button"
-                onClick={() => navigate('/login')}
                 className="link-button"
+                onClick={() => navigate('/login')}
               >
                 ← Volver al login
               </button>
-            </div>
+            </p>
           </form>
         )}
 
-        {/* ✅ PASO 2: RESETEAR CONTRASEÑA */}
+        {/* ── Paso 2: nueva contraseña ── */}
         {step === 2 && (
-          <form onSubmit={handleResetPassword} className="auth-form">
+          <form onSubmit={handleResetPassword}>
             <div className="form-group">
-              <label>📧 Email</label>
+              <label>Email</label>
               <input
                 type="email"
                 value={email}
                 disabled
-                style={{ background: '#f5f5f5', cursor: 'not-allowed' }}
+                style={{ opacity: 0.5, cursor: 'not-allowed' }}
               />
             </div>
 
             <div className="form-group">
-              <label>🔢 Código de Verificación</label>
+              <label htmlFor="fp-code">Código de verificación</label>
               <input
                 type="text"
+                id="fp-code"
+                className="code-input"
+                placeholder="000000"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="123456"
-                maxLength="6"
+                maxLength={6}
                 disabled={loading}
                 required
-                style={{ 
-                  fontSize: '20px', 
-                  letterSpacing: '5px', 
-                  textAlign: 'center' 
-                }}
               />
             </div>
 
             <div className="form-group">
-              <label>🔒 Nueva Contraseña</label>
+              <label htmlFor="fp-pass">Nueva contraseña</label>
               <input
                 type="password"
+                id="fp-pass"
+                placeholder="Mínimo 6 caracteres"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
                 disabled={loading}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>🔒 Confirmar Contraseña</label>
+              <label htmlFor="fp-confirm">Confirmar contraseña</label>
               <input
                 type="password"
+                id="fp-confirm"
+                placeholder="Repite tu contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repite tu contraseña"
                 disabled={loading}
                 required
               />
             </div>
 
-            <button type="submit" className="auth-button" disabled={loading}>
+            <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? 'Actualizando...' : 'Actualizar Contraseña'}
             </button>
 
-            <div className="auth-footer">
-              <button 
+            <p className="auth-link">
+              <button
                 type="button"
-                onClick={() => setStep(1)}
                 className="link-button"
+                onClick={() => setStep(1)}
                 disabled={loading}
               >
                 ← Volver a solicitar código
               </button>
-            </div>
+            </p>
           </form>
         )}
       </div>
