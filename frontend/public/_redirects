@@ -1,0 +1,5 @@
+# Sitemap -> backend
+/sitemap.xml  https://navutech-backend.onrender.com/sitemap.xml  200
+
+# React Router
+/*  /index.html  200

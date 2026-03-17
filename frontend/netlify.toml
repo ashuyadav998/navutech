@@ -22,6 +22,13 @@
   status = 301
   force = true
 
+# Sitemap -> backend (ANTES del SPA redirect)
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "https://navutech-backend.onrender.com/sitemap.xml"
+  status = 200
+  force = true
+
 # SPA redirect
 [[redirects]]
   from = "/*"
