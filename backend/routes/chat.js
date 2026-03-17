@@ -3,22 +3,15 @@ const router = express.Router();
 const { auth } = require('./auth');
 const Chat = require('../models/Chat');
 
-// Obtener o crear chat del usuario
+// Obtener o crear chat del usuario (solo el open)
 router.get('/my-chat', auth, async (req, res) => {
   try {
-    let chat = await Chat.findOne({ user: req.userId }).populate('user', 'name email avatar');
+    let chat = await Chat.findOne({ user: req.userId, status: 'open' })
+      .populate('user', 'name email avatar');
 
     if (!chat) {
-      // Crear nuevo chat
-      chat = new Chat({
-        user: req.userId,
-        messages: [{
-          sender: 'admin',
-          text: '¡Hola! Bienvenido a nuestro chat de soporte. ¿En qué podemos ayudarte hoy?',
-          timestamp: new Date()
-        }],
-        status: 'open'
-      });
+      // No hay chat activo, crear uno vacío
+      chat = new Chat({ user: req.userId, messages: [], status: 'open' });
       await chat.save();
       await chat.populate('user', 'name email avatar');
     }
@@ -154,34 +147,26 @@ router.put('/mark-read', auth, async (req, res) => {
 // Cerrar chat desde el cliente
 router.put('/close-my-chat', auth, async (req, res) => {
   try {
-    const chat = await Chat.findOne({ user: req.userId });
+    const chat = await Chat.findOne({ user: req.userId, status: 'open' });
 
     if (!chat) {
       return res.status(404).json({ message: 'Chat no encontrado' });
     }
 
-    // Cambiar estado a cerrado
+    // Archivar como cerrado (historial)
     chat.status = 'closed';
-    
-    // Añadir mensaje automático de cierre
-    chat.messages.push({
-      sender: 'admin',
-      text: '✅ Conversación finalizada. ¡Gracias por contactarnos! Si necesitas más ayuda, puedes iniciar una nueva conversación.',
-      timestamp: new Date(),
-      read: true
-    });
-
+    chat.lastActivity = new Date();
     await chat.save();
 
-    res.json({ 
-      message: 'Chat cerrado correctamente',
-      chat 
-    });
+    // Notificar al admin que el usuario finalizó
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admins').emit('chat_closed_by_user', { chatId: chat._id.toString() });
+    }
+
+    res.json({ message: 'Chat archivado correctamente' });
   } catch (error) {
-    res.status(500).json({ 
-      message: 'Error al cerrar chat', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error al cerrar chat', error: error.message });
   }
 });
 
@@ -258,21 +243,20 @@ router.put('/admin/close-chat/:chatId', auth, async (req, res) => {
       return res.status(404).json({ message: 'Chat no encontrado' });
     }
 
-    chat.status = 'closed';
-    
-    chat.messages.push({
-      sender: 'admin',
-      text: `✅ Conversación finalizada por ${user.name || 'el administrador'}. Si necesitas más ayuda, puedes iniciar un nuevo chat.`,
-      timestamp: new Date(),
-      read: true
-    });
+    const clientUserId = chat.user.toString();
 
+    // Archivar como cerrado (historial)
+    chat.status = 'closed';
+    chat.lastActivity = new Date();
     await chat.save();
 
-    res.json({
-      message: 'Chat cerrado correctamente',
-      chat
-    });
+    // Notificar al usuario que el admin finalizó
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${clientUserId}`).emit('chat_closed');
+    }
+
+    res.json({ message: 'Chat archivado correctamente', chat });
   } catch (error) {
     res.status(500).json({ message: 'Error al cerrar chat', error: error.message });
   }

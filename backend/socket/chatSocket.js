@@ -68,15 +68,12 @@ module.exports = (io) => {
           return;
         }
 
-        let chat = await Chat.findOne({ user: socket.userId });
+        // Buscar solo el chat open del usuario
+        let chat = await Chat.findOne({ user: socket.userId, status: 'open' });
 
         if (!chat) {
-          chat = new Chat({ 
-            user: socket.userId, 
-            messages: [],
-            status: 'open'
-          });
-          console.log(`📝 Creando nuevo chat para usuario: ${socket.userId}`);
+          // Crear si no existe (primera vez o tras finalizar)
+          chat = new Chat({ user: socket.userId, messages: [], status: 'open' });
         }
 
         chat.messages.push({

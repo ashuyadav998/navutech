@@ -93,6 +93,12 @@ const AdminChat = () => {
       if (chat?._id) handleChatClosed(chat);
     });
 
+    // Usuario finalizó -> quitar de En curso en el panel admin
+    socket.on('chat_closed_by_user', ({ chatId }) => {
+      setOpenChats(prev => prev.filter(c => c._id !== chatId));
+      setSelectedChat(prev => prev?._id === chatId ? null : prev);
+    });
+
     socket.on('message_error', (data) => {
       console.error('❌ Error socket:', data);
       alert('Error: ' + (data?.message || 'Error desconocido'));
