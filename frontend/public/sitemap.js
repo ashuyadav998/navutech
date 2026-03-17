@@ -5,6 +5,27 @@ const Category = require('../models/Category');
 
 const DOMAIN = 'https://aszutech.store';
 
+// Escapar caracteres especiales XML
+const escapeXml = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
+
+const safeDate = (date) => {
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+    return d.toISOString().split('T')[0];
+  } catch {
+    return new Date().toISOString().split('T')[0];
+  }
+};
+
 router.get('/', async (req, res) => {
   try {
     const [products, categories] = await Promise.all([
@@ -21,7 +42,7 @@ router.get('/', async (req, res) => {
       { url: '/register', priority: '0.3', changefreq: 'monthly' },
     ];
 
-    const urls = [
+    const urlEntries = [
       ...staticPages.map(p => `
   <url>
     <loc>${DOMAIN}${p.url}</loc>
@@ -30,18 +51,22 @@ router.get('/', async (req, res) => {
     <priority>${p.priority}</priority>
   </url>`),
 
-      ...categories.map(cat => `
+      ...categories
+        .filter(cat => cat.slug)
+        .map(cat => `
   <url>
-    <loc>${DOMAIN}/categoria/${cat.slug}</loc>
-    <lastmod>${cat.updatedAt ? new Date(cat.updatedAt).toISOString().split('T')[0] : today}</lastmod>
+    <loc>${DOMAIN}/categoria/${escapeXml(cat.slug)}</loc>
+    <lastmod>${safeDate(cat.updatedAt)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`),
 
-      ...products.map(p => `
+      ...products
+        .filter(p => p.slug)
+        .map(p => `
   <url>
-    <loc>${DOMAIN}/productos/${p.slug}</loc>
-    <lastmod>${p.updatedAt ? new Date(p.updatedAt).toISOString().split('T')[0] : today}</lastmod>
+    <loc>${DOMAIN}/productos/${escapeXml(p.slug)}</loc>
+    <lastmod>${safeDate(p.updatedAt)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`)
@@ -49,14 +74,15 @@ router.get('/', async (req, res) => {
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('')}
+${urlEntries.join('')}
 </urlset>`;
 
-    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(xml);
 
   } catch (error) {
+    console.error('Error generando sitemap:', error);
     res.status(500).send('Error generando sitemap');
   }
 });
