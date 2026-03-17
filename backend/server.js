@@ -15,8 +15,6 @@ const io = new Server(http, {
     // ✅ Solo Netlify y localhost — no wildcard
     origin: [
       'https://navutech.netlify.app',
-      'https://aszutech.store',
-      'https://www.aszutech.store',
       'http://localhost:3000'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -32,8 +30,6 @@ app.set('io', io);
 app.use(cors({
   origin: [
     'https://navutech.netlify.app',
-    'https://aszutech.store',
-    'https://www.aszutech.store',
     'http://localhost:3000'
   ],
   credentials: true
@@ -55,6 +51,7 @@ app.use('/api/stripe',        require('./routes/stripe'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/chat',          require('./routes/chat'));
 app.use('/api/tracking',      require('./routes/tracking'));
+app.use('/sitemap.xml',        require('./routes/sitemap'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'API SimShop OK' });
