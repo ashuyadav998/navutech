@@ -15,6 +15,7 @@ const io = new Server(http, {
     // ✅ Solo Netlify y localhost — no wildcard
     origin: [
       'https://navutech.netlify.app',
+      'https://aszutech.store/',
       'http://localhost:3000'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
