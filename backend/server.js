@@ -31,6 +31,7 @@ app.set('io', io);
 app.use(cors({
   origin: [
     'https://navutech.netlify.app',
+    'https://aszutech.store/',
     'http://localhost:3000'
   ],
   credentials: true
