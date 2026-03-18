@@ -1,87 +1,84 @@
-// backend/routes/sitemap.js
-// Genera el sitemap dinámico con productos y categorías de la BD
-// Añadir en server.js: app.use('/sitemap.xml', require('./routes/sitemap'));
-
-const express  = require('express');
-const router   = express.Router();
-const Product  = require('../models/Product');
+const express = require('express');
+const router = express.Router();
+const Product = require('../models/Product');
 const Category = require('../models/Category');
 
-const BASE_URL = 'https://aszutech.es';
+const DOMAIN = 'https://aszutech.store';
 
-// Páginas estáticas con su prioridad y frecuencia
-const STATIC_PAGES = [
-  { path: '/',            priority: '1.0', changefreq: 'daily'   },
-  { path: '/products',    priority: '0.9', changefreq: 'daily'   },
-  { path: '/contacto',    priority: '0.5', changefreq: 'monthly' },
-  { path: '/envios',      priority: '0.4', changefreq: 'monthly' },
-  { path: '/devoluciones',priority: '0.4', changefreq: 'monthly' },
-  { path: '/faq',         priority: '0.5', changefreq: 'monthly' },
-  { path: '/terminos',    priority: '0.3', changefreq: 'yearly'  },
-  { path: '/privacidad',  priority: '0.3', changefreq: 'yearly'  },
-  { path: '/cookies',     priority: '0.3', changefreq: 'yearly'  },
-];
+// Escapar caracteres especiales XML
+const escapeXml = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
+
+const safeDate = (date) => {
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+    return d.toISOString().split('T')[0];
+  } catch {
+    return new Date().toISOString().split('T')[0];
+  }
+};
 
 router.get('/', async (req, res) => {
   try {
-    // Obtener productos y categorías activos
     const [products, categories] = await Promise.all([
-      Product.find({ active: true }, 'slug updatedAt').lean(),
-      Category.find({}, 'slug updatedAt').lean()
+      Product.find({ active: true }).select('slug updatedAt').lean(),
+      Category.find().select('slug updatedAt').lean()
     ]);
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Construir URLs
-    const urls = [];
+    const staticPages = [
+      { url: '/',         priority: '1.0', changefreq: 'daily' },
+      { url: '/products', priority: '0.9', changefreq: 'daily' },
+      { url: '/login',    priority: '0.3', changefreq: 'monthly' },
+      { url: '/register', priority: '0.3', changefreq: 'monthly' },
+    ];
 
-    // 1. Páginas estáticas
-    STATIC_PAGES.forEach(page => {
-      urls.push(`
+    const urlEntries = [
+      ...staticPages.map(p => `
   <url>
-    <loc>${BASE_URL}${page.path}</loc>
+    <loc>${DOMAIN}${p.url}</loc>
     <lastmod>${today}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`);
-    });
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`),
 
-    // 2. Categorías
-    categories.forEach(cat => {
-      const lastmod = cat.updatedAt
-        ? new Date(cat.updatedAt).toISOString().split('T')[0]
-        : today;
-      urls.push(`
+      ...categories
+        .filter(cat => cat.slug)
+        .map(cat => `
   <url>
-    <loc>${BASE_URL}/categoria/${cat.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`);
-    });
-
-    // 3. Productos
-    products.forEach(product => {
-      const lastmod = product.updatedAt
-        ? new Date(product.updatedAt).toISOString().split('T')[0]
-        : today;
-      urls.push(`
-  <url>
-    <loc>${BASE_URL}/product/${product.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
+    <loc>${DOMAIN}/categoria/${escapeXml(cat.slug)}</loc>
+    <lastmod>${safeDate(cat.updatedAt)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>`);
-    });
+  </url>`),
 
-    // Generar XML
+      ...products
+        .filter(p => p.slug)
+        .map(p => `
+  <url>
+    <loc>${DOMAIN}/productos/${escapeXml(p.slug)}</loc>
+    <lastmod>${safeDate(p.updatedAt)}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`)
+    ];
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('\n')}
+${urlEntries.join('')}
 </urlset>`;
 
-    res.header('Content-Type', 'application/xml');
-    res.header('Cache-Control', 'public, max-age=3600'); // cache 1 hora
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(xml);
 
   } catch (error) {

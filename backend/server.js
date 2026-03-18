@@ -34,7 +34,6 @@ app.use(cors({
   ],
   credentials: true
 }));
-
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
