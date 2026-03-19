@@ -5,60 +5,74 @@ const cors = require('cors');
 
 const app = express();
 
-// HTTP server para Socket.IO
-const http = require('http').createServer(app);
+// =======================
+// HTTP + SOCKET.IO
+// =======================
 
-// SOCKET.IO
+const http = require('http').createServer(app);
 const { Server } = require('socket.io');
 
-// ✅ ORÍGENES PERMITIDOS (SIN SLASH FINAL)
+// ✅ ORÍGENES EXACTOS (SIN / FINAL)
 const allowedOrigins = [
   'https://navutech.netlify.app',
   'https://aszutech.store',
   'http://localhost:3000'
 ];
 
+// =======================
+// SOCKET.IO
+// =======================
+
 const io = new Server(http, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('❌ CORS Socket bloqueado: ' + origin));
-      }
-    },
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
 });
 
-// ✅ Hacer io accesible globalmente
 app.set('io', io);
 
-// 🔍 DEBUG (opcional pero recomendado en Render)
-app.use((req, res, next) => {
-  console.log('🌍 Origin:', req.headers.origin);
-  next();
-});
+// =======================
+// 🔥 CORS REAL (CORRECTO)
+// =======================
 
-// ✅ CORS middleware correcto
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (Postman, navegador directo)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      callback(new Error('❌ CORS bloqueado: ' + origin));
+      console.log('❌ CORS bloqueado:', origin);
+      return callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true
 }));
 
-// ⚠️ Stripe webhook (ANTES de express.json)
+// ⚠️ IMPORTANTE: manejar preflight (OPTIONS)
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
+// =======================
+// MIDDLEWARES
+// =======================
+
+// Stripe webhook (antes de json)
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
-// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// DEBUG opcional
+app.use((req, res, next) => {
+  console.log('🌍 Origin:', req.headers.origin);
+  next();
+});
 
 // =======================
 // RUTAS
@@ -88,8 +102,7 @@ app.get('/', (req, res) => {
 app.get('/api/test-socket', (req, res) => {
   const io = req.app.get('io');
   res.json({
-    socketAvailable: !!io,
-    message: io ? 'Socket.IO disponible en rutas' : 'Socket.IO NO disponible'
+    socketAvailable: !!io
   });
 });
 
@@ -100,23 +113,20 @@ app.get('/api/test-socket', (req, res) => {
 require('./socket/chatSocket')(io);
 
 // =======================
-// MONGODB + SERVER START
+// START SERVER
 // =======================
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log('✅ MongoDB conectado');
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('✅ MongoDB conectado');
 
-  const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 5000;
 
-  http.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-    console.log('📡 Socket.IO ACTIVADO');
+    http.listen(PORT, () => {
+      console.log(`🚀 Servidor en puerto ${PORT}`);
+      console.log('📡 Socket.IO activo');
+    });
+  })
+  .catch(err => {
+    console.error('❌ Error MongoDB:', err);
   });
-})
-.catch(err => {
-  console.error('❌ Error MongoDB:', err);
-});
